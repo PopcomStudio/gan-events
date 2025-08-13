@@ -1,0 +1,30 @@
+//.border         { border-width: 2px !important; }
+//.border-top     { border-top-width: 2px !important; }
+//.border-right   { border-right-width: 2px !important; }
+//.border-bottom  { border-bottom-width: 2px !important; }
+//.border-left    { border-left-width: 2px !important; }
+
+.separator, .separator-top {
+  position: relative;
+
+  &:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 50px;
+    height: 3px;
+    background: $dark;
+  }
+}
+
+.separator, .separator-bottom {
+  &:after { bottom: -.5rem; }
+}
+
+.separator-top {
+  &:after { top: -.5rem; }
+}
+
+.border-2x {
+  border-width: 2px !important;
+}

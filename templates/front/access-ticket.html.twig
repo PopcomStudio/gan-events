@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9 my-5">
+            <div class="mb-3">
+                <div class="container d-flex justify-content-between">
+                    <img src="{{ asset('assets/images/logo-gan.png') }}" alt="Gan Assurances" class="img-fluid" />
+                </div>
+            </div>
+
+            <div class="card overflow-hidden border-0 shadow-lg">
+                <div class="card-body p-0">
+                    <div class="row no-gutters">
+                        <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                            <div class="col-lg-6">
+                                <div class="p-4">
+                                    {% if guest.status != 'participant' %}
+                                    <h2 class="mb-4">Evénement: {{ event.name }}</h2>
+                                    <p>Accès pour {{ guest.gender }} {{ guest.lastname }} {{ guest.firstname }}</p>
+                                    <button><a href="{{ path('access_ok', {
+                                    id: event.id, uid: guest.id})}}" class="display-none">Valider l'entrée</a>
+                                    </button>
+                                    {% endif %}
+
+                                    {% if guest.status == 'participant' %}
+                                        <p>Participant: {{ guest.gender }} {{ guest.lastname }} {{ guest.firstname }}</p>
+                                        <p>Votre QR code a déjà été scanné</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

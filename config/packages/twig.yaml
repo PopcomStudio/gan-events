@@ -1,0 +1,14 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    paths:
+        'assets/images': images
+    debug: '%kernel.debug%'
+    strict_variables: true
+    exception_controller: null
+    form_themes:
+        - 'bootstrap_5_layout.html.twig'
+        - 'theme/form.html.twig'
+    globals:
+        google_maps_api: '%env(GOOGLE_MAPS_API)%'
+    date:
+        timezone: 'Europe/Paris'

@@ -1,0 +1,294 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title h3 fw-normal">Paramètres des emails</h2>
+            <p>{{ description }}</p>
+            <div id="email-panels" class="{% if panels|length > 1 %}border-top pt-3{% endif %}">
+                {% if panels|length > 1 %}
+                    {% if 'planning' in panels %}
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse"
+                                data-bs-target="#planning-panel" aria-controls="planning-panel" aria-expanded="false">
+                            <i class="fas fa-paper-plane me-1"></i> Planning des envois
+                        </button>
+                    {% endif %}
+                    {% if 'template' in panels %}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse"
+                            data-bs-target="#template-panel" aria-controls="template-panel" aria-expanded="false">
+                        <i class="fas fa-feather-alt me-1"></i> Modèles d'email
+                    </button>
+                    {% endif %}
+                    {% if 'visual' in panels %}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse"
+                            data-bs-target="#visual-panel" aria-controls="visual-panel" aria-expanded="false">
+                        <i class="fas fa-images me-1"></i> Visuels
+                    </button>
+                    {% endif %}
+                    <div class="mt-3">
+                {% endif %}
+                {% if 'planning' in panels %}
+                    <div class="collapse" id="planning-panel" data-bs-parent="#email-panels">
+                        <table id="table-schedules" class="table table-striped w-100">
+                            <thead>
+                            <tr class="bg-secondary text-dark">
+                                <th class="no-sort"></th>
+                                <th class="no-sort small fw-bold">#</th>
+                                <th class="no-sort small fw-bold">Sujet</th>
+                                <th class="no-sort small fw-bold">Email</th>
+                                <th class="small fw-bold text-nowrap">Date d'envoi</th>
+                                <th class="no-sort text-center small fw-bold text-nowrap">Contacts de</th>
+                                <th class="no-sort text-center small fw-bold">Modèle</th>
+                                <th class="no-sort text-center small fw-bold">Nouveaux uniquement</th>
+                                <th class="no-sort text-center small fw-bold text-nowrap">Email test</th>
+                                {% if is_granted('MANAGE_EMAIL', event) %}
+                                <th class="no-sort"></th>
+                                {% endif %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for schedule in emailSchedules %}
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        {% if schedule.processedAt %}
+                                            <i class="fas fa-check-circle fa-fw text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-clock fa-fw"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small align-middle">
+                                        #{{ schedule.id }}
+                                    </td>
+                                    <td class="small align-middle">
+                                        {{ schedule.subject }}
+                                    </td>
+                                    <td class="small align-middle">
+                                        {{ schedule.displayType|capitalize }}
+                                    </td>
+                                    <td class="small align-middle text-nowrap" data-order="{{ schedule.sendAt|date('YmdHis') }}">
+                                        {{ schedule.sendAt|format_date(pattern="eeee dd MMMM y @ H:mm", locale="fr") -}}
+                                    </td>
+                                    <td class="small align-middle text-center">
+                                        {% if eventHelper.currentSender and schedule.sender == eventHelper.currentSender() %}
+                                            Mes contacts <span class="fw-bold">#{{ schedule.sender.id }}</span>
+                                        {% elseif schedule.sender %}
+                                            {{ schedule.sender.displayName }} <span class="fw-bold">#{{ schedule.sender.id }}</span>
+                                        {% else %}
+                                            Tous les expéditeurs
+                                        {% endif %}
+                                    </td>
+                                    <td class="small align-middle text-center">
+                                        {% if schedule.template -%}
+                                            #{{ schedule.template.id }}
+{#                                            {{ schedule.template.subject }}#}
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-center align-middle">
+                                        {% if schedule.onlyNew %}Oui{% else %}Non{% endif %}
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <a href="{{ path('send', {id: schedule.id, type: 'schedule'}) }}"
+                                           class="btn btn-primary btn-circle" data-toggle="load-modal">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </a>
+                                    </td>
+                                    {% if is_granted('MANAGE_EMAIL', event) %}
+                                        <td class="text-center align-middle">
+                                            {% if not schedule.processedAt %}
+                                                <a href="{{ path('schedule_edit', {id: schedule.id}) }}" data-toggle="load-modal">
+                                                    <span class="fas fa-edit"></span>
+                                                    <span class="sr-only">Editer</span>
+                                                </a>
+                                            {% else %}
+                                                <span class="fas fa-edit text-muted"></span>
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{{ path('schedule_new', {id: event.id}) }}" data-toggle="load-modal"
+                           class="btn btn-sm btn-secondary mt-2">
+                            <i class="fas fa-plus me-1"></i> Ajouter
+                        </a>
+                    </div>
+                {% endif %}
+                {% if 'template' in panels %}
+                    <div class="collapse" id="template-panel" data-bs-parent="#email-panels">
+                        <table id="table-templates" class="table table-striped w-100">
+                            <thead>
+                            <tr class="bg-secondary text-dark">
+                                <th class="no-sort small fw-bold">#</th>
+                                <th class="no-sort small fw-bold">Type</th>
+                                <th class="no-sort small fw-bold">Objet</th>
+                                <th class="no-sort text-center small fw-bold text-nowrap">Disponible pour</th>
+                                <th class="no-sort text-center small fw-bold text-nowrap">Email test</th>
+                                {% if is_granted('MANAGE_EMAIL', event) %}
+                                <th class="no-sort"></th>
+                                {% endif %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for template in emailTemplates %}
+                            <tr>
+                                <td class="small align-middle">
+                                    <span class="fw-bold">#{{ template.id }}</span>
+                                </td>
+                                <td class="small align-middle">
+                                    {{ template.displayType|capitalize }}
+                                </td>
+                                <td class="small align-middle">
+                                    {{ template.subject }}
+                                </td>
+                                <td class="small align-middle text-center">
+                                    {% if eventHelper.currentSender and template.sender == eventHelper.currentSender() %}
+                                        Moi uniquement <span class="fw-bold">#{{ template.sender.id }}</span>
+                                    {% elseif template.sender %}
+                                        {{ template.sender.displayName }} <span class="fw-bold">#{{ template.sender.id }}</span>
+                                    {% else %}
+                                        Tous les expéditeurs
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a href="{{ path('send', {id: template.id, type: 'template'}) }}"
+                                       class="btn btn-primary btn-circle" data-toggle="load-modal">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </a>
+                                </td>
+                                {% if is_granted('MANAGE_EMAIL', event) %}
+                                <td class="text-center align-middle">
+                                    <a href="{{ path('email_edit', {id: template.id}) }}" data-toggle="load-modal">
+                                        <span class="fas fa-edit"></span>
+                                        <span class="sr-only">Editer</span>
+                                    </a>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if addTemplate %}
+                        <a href="{{ path('email_new', {id: event.id}) }}" data-toggle="load-modal"
+                           class="btn btn-sm btn-secondary mt-2">
+                            <i class="fas fa-plus me-1"></i> Ajouter
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if 'visual' in panels %}
+                    <div class="collapse" id="visual-panel" data-bs-parent="#email-panels">
+                        <p class="text-muted small">
+                            Définissez les différents visuels pour les emails. Si aucun visuel n'est défini,
+                            le visuel de l'événement sera utilisé.
+                        </p>
+
+                        {{ form_start(visualForm) }}
+                        {{ form_widget(visualForm) }}
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="far fa-save me-1"></i> Enregister
+                        </button>
+                        {{ form_end(visualForm) }}
+                    </div>
+                {% endif %}
+                {% if panels|length > 1 %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+      var filemanager_url = "{{ path('filemanager_browse', {type: eventHelper.currentSender ? 'sender' : 'event', id: eventHelper.currentSender ? eventHelper.currentSender.id : eventHelper.event.id}) }}"
+    </script>
+    {{ encore_entry_script_tags('datatables') }}
+    {{ encore_entry_script_tags('tinymce') }}
+    {{ encore_entry_script_tags('datepicker') }}
+    {{ encore_entry_script_tags('select2') }}
+    <script>
+      document.addEventListener('focusin', (e) => {
+        if (e.target.closest(".tox-tinymce-aux, .moxman-window, .tam-assetmanager-root") !== null) {
+          e.stopImmediatePropagation();
+        }
+      });
+      
+      var tables = {
+        'planning-panel': $('#table-schedules').DataTable({
+          searching: false,
+          order: [[4, "desc"]],
+          columnDefs: [
+            {targets: 'no-sort', orderable: false}
+          ],
+          pageLength: 10,
+        }),
+        'template-panel': $('#table-templates').DataTable({
+          searching: false,
+          ordering: false,
+          pageLength: 10,
+        })
+      }
+
+      // Panels
+
+      var action = 'hide';
+
+      var $buttons = $('#email-panels .btn').on('click', function () {
+
+        $(this).blur();
+      });
+
+      bootstrap.Collapse.getOrCreateInstance($('.collapse').on('show.bs.collapse', function () {
+
+        action = 'show';
+
+        var $btn = $('button[data-bs-toggle="collapse"][data-bs-target="#' + $(this).attr('id') + '"]');
+
+        $('#email-panels button[data-bs-toggle="collapse"]').removeClass('btn-force-hover');
+
+        $btn.addClass('btn-force-hover');
+
+        if (typeof tables[$(this).attr('id')] !== 'undefined') {
+          setTimeout(() => {
+            tables[$(this).attr('id')].draw();
+          }, 10)
+        }
+
+      }).on('hide.bs.collapse', function (e) {
+
+        if (action !== 'show') {
+
+          e.preventDefault();
+        }
+
+        if (typeof tables[$(this).attr('id')] !== 'undefined') {
+          tables[$(this).attr('id')].draw();
+        }
+
+        action = 'hide';
+
+      }).first()).show();
+
+      var hash = window.location.hash;
+      if (hash) {
+
+        $('#email-panels .btn[data-bs-target="' + hash + '-panel"]').trigger('click');
+      }
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+    {{ encore_entry_link_tags('datepicker') }}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark">
+            <i class="fas fa-images me-2"></i>
+            Gestion des visuels des emails
+        </div>
+        <div class="card-body">
+            <p class="alert alert-info">
+                <i class="fas fa-info-circle me-1 opacity-75"></i>
+                Les visuels sont communs à tous les Expéditeurs. Les images transmises seront tronquées au format 600x300 pixels.
+            </p>
+            {{ form_widget(form) }}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+    {{ encore_entry_link_tags('datepicker') }}
+{% endblock %}

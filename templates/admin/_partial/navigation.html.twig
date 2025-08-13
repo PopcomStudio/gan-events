@@ -1,0 +1,43 @@
+{% if is_granted('CREATE_EVENT') %}
+    <span class="nav-header">Créer</span>
+    {% if eventHelper.isCollection %}
+        <a href="{{ path('event_collection_new', {'id': eventHelper.event.id}) }}" class="nav-link text-inherit">
+            <i class="fas fa-calendar-plus fa-fw me-2 opacity-50 text-primary"></i>
+            Ajouter un événement
+        </a>
+    {% else %}
+    <a href="{{ path('event_new') }}" class="nav-link text-inherit">
+        <i class="fas fa-calendar-plus fa-fw me-2 opacity-50 text-primary"></i>
+        Nouvel événement
+    </a>
+    <a href="{{ path('event_new_collection') }}" class="nav-link text-inherit">
+        <i class="fas fa-calendar-week fa-fw me-2 opacity-50 text-primary"></i>
+        Nouvelle collection
+    </a>
+    {% endif %}
+    <hr class="nav-divider">
+{% endif %}
+
+<span class="nav-header">Gérer</span>
+    {%  if eventHelper.isCollection and is_granted('EDIT', eventHelper.event) %}
+        <a href="{{ path('event_edit_collection', {id: eventHelper.event.id}) }}" class="nav-link text-inherit">
+            <i class="fas fa-pen fa-fw me-2 opacity-50 text-primary"></i>
+            Modifier la collection
+        </a>
+    {% else %}
+    <a href="{{ path('app_archive') }}" class="nav-link text-inherit">
+        <i class="fas fa-archive fa-fw me-2 opacity-50 text-primary"></i>
+        Archives
+    </a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_user_index') }}" class="nav-link text-inherit">
+                <i class="fas fa-users fa-fw me-2 opacity-50 text-primary"></i>
+                Utilisateurs
+            </a>
+            <a href="{{ path('option_index') }}" class="nav-link text-inherit">
+                <i class="fas fa-cogs fa-fw me-2 opacity-50 text-primary"></i>
+                Paramètres
+            </a>
+        {% endif %}
+    {% endif %}
+<hr class="nav-divider">

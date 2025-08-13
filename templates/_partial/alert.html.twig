@@ -1,0 +1,8 @@
+{% for label, messages in flashes -%}
+    {%- for message in messages -%}
+        <div class="alert alert-{{ label }}{% if isModal is defined %} mb-0{% endif%} alert-dismissible fade show small" role="alert">
+            {{ message|raw }}
+            <button type="button" class="btn-close" data-bs-dismiss="{% if isModal is not defined %}alert{% else %}modal{% endif %}" aria-label="Close"></button>
+        </div>
+    {%- endfor -%}
+{%- endfor %}

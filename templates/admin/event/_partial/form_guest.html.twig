@@ -1,0 +1,58 @@
+{% import _self as _macro %}
+
+<table class="table table-striped" id="contact-repeater" data-rows=".repeater-row" data-prototype="{{ _macro.form_contact(form.contacts.vars.prototype)|e('html_attr') }}">
+    <thead class="bg-dark text-white small">
+    <tr>
+        <th class="fw-bold">#</th>
+        <th class="fw-bold">Civ.</th>
+        <th class="fw-bold">Nom</th>
+        <th class="fw-bold">Prénom</th>
+        {% if form.contacts.vars.prototype.children.phone is defined %}
+        <th class="fw-bold">Tél.</th>
+        {% endif %}
+        <th class="fw-bold">Email *</th>
+        {% if form.contacts.vars.prototype.children.company is defined %}
+        <th class="fw-bold">Société</th>
+        {% endif %}
+        {% if form.contacts.vars.prototype.children.siret is defined %}
+        <th class="fw-bold">Siret</th>
+        {% endif %}
+        <th class="fw-bold">Inspecteur commercial</th>
+
+    </tr>
+    </thead>
+    <tbody data-rows="contact-repeater">
+    {% for contact in form.contacts %}
+        {{ _macro.form_contact(contact) }}
+    {% endfor %}
+    </tbody>
+</table>
+<div class="d-flex justify-content-between">
+    <button type="button" data-action="add-after" data-target="contact-repeater" class="btn btn-primary btn-sm">
+        <i class="fas fa-user-plus me-1"></i> Ajouter
+    </button>
+</div>
+
+{% macro form_contact(contact) %}
+    <tr class="repeater-row">
+        <td style="vertical-align: middle">
+            <a href="#" class="text-danger" data-delete-row="true" data-tooltip="true" title="Retirer la ligne">
+                <i class="fas fa-user-slash"></i>
+            </a>
+        </td>
+        <td>{{ form_row(contact.gender, {row_attr: {class: 'mb-0'}, attr: {class: 'form-select-sm'}}) }}</td>
+        <td>{{ form_row(contact.lastName, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+        <td>{{ form_row(contact.firstName, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+        {% if contact.phone is defined %}
+        <td>{{ form_row(contact.phone, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+        {% endif %}
+        <td>{{ form_row(contact.email, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+        {% if contact.company is defined %}
+            <td>{{ form_row(contact.company, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+            {% if contact.siret is defined %}
+                <td>{{ form_row(contact.siret, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+            {% endif %}
+        {% endif %}
+        <td>{{ form_row(contact.inspecteurCommercial, {row_attr: {class: 'mb-0'}, attr: {class: 'form-control-sm'}}) }}</td>
+    </tr>
+{% endmacro %}

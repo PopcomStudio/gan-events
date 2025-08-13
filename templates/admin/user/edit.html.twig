@@ -1,0 +1,67 @@
+{% if form is defined %}
+
+    {{ form_start(form, {attr: {class: 'modal-content'}}) }}
+
+        <div class="modal-header bg-primary">
+            <h5 class="modal-title text-white" id="modalLabel">
+                {% if app.user == user %}
+                    <span class="fas fa-user-circle fa-fw me-1"></span>
+                    Editer mon profil
+                {% elseif user.id is null %}
+                    <span class="fas fa-user-plus fa-fw me-1"></span>
+                    Nouvel utilisateur
+                {% else %}
+                    <span class="fas fa-user-cog fa-fw me-1"></span>
+                    {{ user.displayName|default('Editer l\'utilisateur') }}
+                {% endif %}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+
+        {{ form_errors(form) }}
+
+        <div class="modal-body pb-0">
+
+            {% if user.id is null %}
+                <p class="small">Un email sera envoyé au nouvel utilisateur l'invitant à configurer son mot de passe.</p>
+                <hr class="ui-menu-divider">
+            {% endif %}
+
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+
+            {% if form.admin is defined %}
+                {{ form_row(form.admin) }}
+            {% endif %}
+
+            {{ form_row(form.email) }}
+            {{ form_row(form.firstName) }}
+            {{ form_row(form.lastName) }}
+            {{ form_row(form.phone) }}
+
+            {% if form.plainPassword is defined %}
+                <hr class="ui-menu-divider">
+                {{ form_row(form.plainPassword) }}
+            {% endif %}
+
+            {{ form_widget(form) }}
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+        </div>
+
+    {{ form_end(form) }}
+
+{% else %}
+
+    <div class="modal-content">
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes, isModal: true} only %}
+        </div>
+        <script>
+            document.location.reload();
+        </script>
+    </div>
+
+{% endif %}

@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12 col-md-9">
+            <div class="card overflow-hidden border-0 shadow-lg my-5">
+                <div class="card-body p-0">
+                    <div class="row no-gutters">
+
+                        <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+
+                        <div class="col-lg-6">
+                            {% if form is defined and form %}{{ form_start(form) }}{% endif %}
+                            <div class="p-5">
+
+                                <h1 class="display-4 separator mb-4">
+                                    {{ heading|default('Inscrivez-vous') }}
+                                </h1>
+
+                                {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+
+                                {% if form is defined and form %}
+                                    {{ form_widget(form) }}
+                                    <button class="btn btn-secondary w-100" type="submit">
+                                        {{ button|default('S\'inscrire') }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                            {% if form is defined and form %}{{ form_end(form) }}{% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

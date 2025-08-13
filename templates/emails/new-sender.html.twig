@@ -1,0 +1,26 @@
+<p>Bonjour,</p>
+<p>
+    Un compte à votre nom vient d'être créé sur la plateforme <a href="{{ url('app_index') }}">gan.events</a>
+    pour gérer les invitations de l'événement : {{ event.name }}.
+</p>
+<p>
+    Depuis votre compte, vous pourrez piloter le suivi des inscriptions, organiser vos relances
+    et communiquer avec vos invités. Dès maintenant, finalisez la création de votre compte
+    en cliquant sur le lien suivant :<br/>
+    <a href="{{ signature.signedUrl }}">
+        {{ signature.signedUrl }}
+    </a>
+ </p>
+<p>
+    Ce lien expirera dans {{ signature.expirationMessageKey|trans(signature.expirationMessageData, 'VerifyEmailBundle') }}.
+</p>
+ <p>
+    Identifiant&nbsp;: {{ user.email }}<br />
+	Mot de passe&nbsp;: à créer vous-même
+</p>
+<p>
+	Pour toute question, prenez contact avec l'organisateur de l'événement.
+</p>
+<p>
+	Bonne prise en main, et à très vite sur <a href="{{ url('app_index') }}">gan.events</a>.
+</p>

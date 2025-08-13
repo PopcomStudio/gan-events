@@ -1,0 +1,22 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Paramètres{% endblock %}
+{% block pageTitle %}{{ block('title') }}{% endblock %}
+
+{% block content %}
+
+    <div class="card">
+        <div class="fw-bold card-header text-dark">
+            Réglages généraux
+        </div>
+        <div class="list-group list-group-flush d-flex justify-content-around">
+            {% for option in options %}
+                <a href="{{ path('option_edit', {'name': option.name}) }}" class="list-group-item -underline d-flex justify-content-between align-items-center">
+                    <span>{{ option.displayName }}</span>
+                    <span class="fas fa-edit"></span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

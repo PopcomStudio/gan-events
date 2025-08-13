@@ -1,0 +1,43 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+    <div class="card">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-user-plus me-2"></i>
+                {{ formName|default('Ajouter des contacts') }}
+            </div>
+            <a href="{{ path('app_event_contacts_import', {id: eventHelper.event.id}) }}">
+                <span class="sr-only">Importer des contacts</span>
+                <span class="fas fa-upload"></span>
+            </a>
+        </div>
+        <div class="card-body">
+            {% include 'admin/event/_partial/form_guest.html.twig' with {form: form} only %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('form-repeater') }}
+    <script>
+        // Form
+
+        var $repeater = $('#contact-repeater');
+
+        $repeater.on('added.repeater prepared.row.repeater', function(e, el) {
+
+            el.find('[data-tooltip="true"]').tooltip();
+
+        }).on('delete.repeater', function(e, el) {
+
+            el.find('[data-tooltip="true"]').tooltip('dispose');
+        });
+
+        $repeater.each(function(){
+            var manager = new RepeaterManager();
+            manager.init($(this));
+        });
+    </script>
+{% endblock %}

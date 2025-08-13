@@ -1,0 +1,21 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card">
+        <div class="card-header text-dark d-flex flex-row justify-content-between align-items-center">
+            <h2 class="h6 mb-0">
+                <span class="fas fa-clock me-1"></span>
+                {{ form_title }}
+            </h2>
+            <a href="{{ path('app_event_edit', {id: eventHelper.event.id}) }}">
+                <span class="sr-only">Retour</span>
+                <span class="fas fa-arrow-circle-left"></span>
+            </a>
+        </div>
+        <div class="card-body">
+            {{ form_widget(form) }}
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% set navbar %}
+    {% if block('navigation') is defined and block('navigation') %}
+        {{ block('navigation') }}
+    {% else %}
+        {% include('admin/_partial/navigation.dashboard.html.twig') %}
+        {% include 'admin/_partial/navigation.html.twig' %}
+    {% endif %}
+    {% include('admin/_partial/navigation.doc.html.twig') %}
+{% endset %}
+
+{% block body %}
+    <div id="wrapper">
+        <header id="header" class="bg-white shadow">
+            <div class="container-fluid py-3 d-flex justify-content-between align-items-center">
+
+                <div>
+                    <a href="{{ path('app_index') }}" class="fw-bold text-dark d-inline-flex align-items-center">
+                        <img src="{{ asset('assets/images/logo-gan.png') }}" width="35" alt="Gan Assurances" class="me-2" />
+                        <span class="d-none d-lg-inline">Gan Events</span>
+                    </a>
+                </div>
+
+                <div>
+                    <div class="dropdown">
+                        <span class="me-2 fw-bold text-gray d-none d-lg-inline">{{ app.user.displayName }}</span>
+                        <button type="button" aria-labelledby="Menu" class="btn btn-link text-inherit d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#offcanvas" aria-controls="offcanvas">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button type="button" class="btn btn-light btn-circle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu utilisateur">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <ul class="dropdown-menu mt-3" aria-labelledby="useMenu" style="min-width:250px;">
+                            <li class="dropdown-item-text">
+                                <span class="d-block fw-bold">{{ app.user.displayName }}</span>
+                                <small>{{ app.user.email }}</small>
+                            </li>
+                            <li class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ path('app_user_profile') }}" data-toggle="load-modal">
+                                    <i class="fas fa-user-circle fa-fw me-2 opacity-25"></i>
+                                    Editer mon profil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ is_original_user() ? path('app_logout') : path('app_index', {_switch_user: '_exit'}) }}">
+                                    <i class="fas fa-sign-out-alt fa-fw me-2 opacity-25"></i>
+                                    {{ is_original_user() ? 'Déconnexion' : 'Retour à mon profil' }}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div id="wrapper-content">
+            <div id="sidebar" class="nav pt-3 flex-column shadow d-none d-lg-block">
+                {{ navbar }}
+            </div>
+            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvas" style="max-width: 80%">
+                <div class="pt-3 pe-3 text-end">
+                    <button type="button" class="btn-close" aria-label="Fermer" data-bs-toggle="offcanvas" data-bs-target="#offcanvas" aria-controls="offcanvas"></button>
+                </div>
+                {{ navbar }}
+            </div>
+            <div id="body">
+                {% if block('pageTitle') is defined %}
+                <div class="bg-{{ eventHelper.dashboardColor }} py-5">
+                    <div class="container text-center text-white">
+                        {% if block('pageDescription') is defined %}
+                            {% set pageDescription %}{{ block('pageDescription') }}{% endset %}
+                            {% if pageDescription %}<p class="mb-0">{{ pageDescription }}</p>{% endif %}
+                        {% endif %}
+                        <h1 class="text-white">{{ block('pageTitle') }}</h1>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="container px-lg-4 my-4">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Modal
+
+        var modal_url = '',
+            spinner = '<div class="modal-content"><div class="modal-body">' +
+                '<div class="fa-3x text-center"><i class="fas fa-spinner fa-pulse"></i></div>' +
+                '</div></div>';
+
+        $modal = $('#modal').on('submit', 'form', function(e) {
+
+            e.preventDefault();
+
+            var data = $(this).serialize();
+
+            $modal.find('.modal-content').remove();
+            $modal.find('.modal-body').html(spinner)
+
+            $.ajax({
+                type: 'POST',
+                url: modal_url,
+                data: data
+            }).done(function(data) {
+                $modal.find('.modal-content').remove();
+                $modal.find('.modal-dialog').html($(data));
+
+            }).fail(function() {
+                $modal.find('.modal-dialog').html('<div class="modal-content"><div class="modal-body">Action impossible.</div></div>');
+            });
+        });
+
+        $('body').on('click', 'a[data-toggle="load-modal"]', function(e){
+
+            e.preventDefault();
+
+            var $this = $(this);
+
+            modal_url = $this.attr('href');
+
+            $modal.find('.modal-content').remove();
+            $modal.find('.modal-dialog').html(spinner);
+            $modal.modal('show');
+
+            $.get(modal_url).done(function(data) {
+                $modal.find('.modal-content').remove();
+                $modal.find('.modal-dialog').html($(data));
+            }).fail(function() {
+                $modal.find('.modal-content').remove();
+                $modal.find('.modal-dialog').html('<div class="modal-content"><div class="modal-body">Action impossible.</div></div>');
+            });
+        });
+    </script>
+{% endblock %}

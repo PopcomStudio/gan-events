@@ -1,0 +1,31 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block content %}
+<div class="card shadow mb-2">
+    <div class="card-header fw-bold text-dark d-flex align-items-center">
+        <i class="fas fa-exchange-alt me-2"></i>
+        Déplacer mon événement
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <h2 class="h6">Evénements en cours</h2>
+                <div class="list-group">
+                    <a href="{{ url('event.moveto', {id: event.id, collection: 0}) }}" class="list-group-item list-group-item-action {% if not event.parent %}disabled{% endif %}">Evénement en cours (en dehors d'une collection)</a>
+                    {% for collection in collections %}
+                        <a href="{{ url('event.moveto', {id: event.id, collection: collection.id}) }}" class="list-group-item list-group-item-action {% if collection == event.parent %}disabled{% endif %}">{{ collection.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <h2 class="h6">Evénements archivés</h2>
+                <div class="list-group">
+                    {% for collectionArchived in collectionsArchived %}
+                        <a href="{{ url('event.moveto', {id: event.id, collection: collectionArchived.id}) }}" class="list-group-item list-group-item-action {% if collectionArchived == event.parent %}disabled{% endif %}">{{ collectionArchived.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

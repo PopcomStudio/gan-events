@@ -1,0 +1,203 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+<div class="card mb-2 shadow">
+    <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+        <div>
+            <i class="fas fa-envelope-open-text me-2"></i>
+            Liste des contacts
+        </div>
+        <a href="{{ path('app_event_contacts_add', {id: eventHelper.event.id}) }}">
+            <span class="sr-only">Ajouter des contacts</span>
+            <span class="fas fa-user-plus"></span>
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p class="mb-0" role="button" data-bs-toggle="collapse" data-bs-target="#more-infos" aria-expanded="false" aria-controls="more-infos">
+                <i class="fas fa-question-circle me-2"></i>
+                En savoir plus sur les statuts
+            </p>
+            <ul class="collapse small mt-2" id="more-infos">
+                <li><b>En attente</b> : aucun email envoyé au contact</li>
+                <li><b>Invité</b> : le contact a été invité</li>
+                <li><b>Permuté</b> : le contact a basculé sur une autre date</li>
+                <li><b>Relancé</b> : le contact a été relancé</li>
+                <li><b>Refus</b> : le contact a décliné l'invitation</li>
+                <li><b>Inscrit</b> : le contact a accepté l'invitation</li>
+                <li><b>Participant</b> : le contact a été scanné lors de l'événement</li>
+            </ul>
+        </div>
+    <table id="table-contacts" class="table table-striped w-100">
+        <thead>
+        <tr class="bg-secondary text-dark small">
+            <th class="no-sort text-center fw-bold">#</th>
+            <th class="fw-bold">Statut</th>
+            <th class="fw-bold">Email</th>
+            <th class="fw-bold">Civ.</th>
+            <th class="fw-bold">Nom</th>
+            <th class="fw-bold">Prénom</th>
+            <th class="fw-bold">Tél.</th>
+            <th class="fw-bold">Société</th>
+            <th class="fw-bold">Réponse</th>
+            <th class="no-sort fw-bold">Type</th>
+            <th class="fw-bold">Inspecteur commercial</th>
+            <th class="no-sort text-center"><i class="fas fa-bell" data-bs-tooltip="true" title="Optin/Optout"></i></th>
+        </tr>
+        </thead>
+        <tbody class="small text-nowrap">
+
+        {% for guest in guests %}
+            {% set status -%}
+                {%- if guest[0].isRegistered -%}
+                    <i class="fas fa-user-check fa-fw text-success me-1"></i> Inscrit
+                {%- elseif guest[0].isDeclined -%}
+                    <i class="fas fa-times-circle fa-fw text-danger me-1"></i> Refus
+                {%- elseif guest[0].isParticipated -%}
+                    <i class="fas fa-check-circle fa-fw text-success me-1"></i> Participant
+                {%- elseif guest[0].isSwitched -%}
+                    <i class="fas fa-people-arrows text-danger fa-fw me-1"></i> Permuté
+                {%- elseif guest.upTotal -%}
+                    <i class="fas fa-user-clock fa-fw me-1"></i> Relancé
+                {%- elseif guest.invitationTotal -%}
+                    <i class="fas fa-user-clock fa-fw me-1"></i> Invité
+                {%- else -%}
+                    <i class="fas fa-question-circle fa-fw text-danger me-1"></i> En attente
+                {%- endif %}
+
+                {#                                    GoTo: Prospect #}
+                {#                                    <i class="fas fa-question-circle fa-fw text-danger"></i> Prospect#}
+                {#                                    {%- if guest[0].status == 'prospect' -%}#}
+                {#                                        <i class="fas fa-question-circle fa-fw text-danger"></i> Prospect#}
+                {#                                    {%- elseif guest[0].status == 'subscribe' -%}#}
+                {#                                        <i class="fas fa-user-check fa-fw text-success"></i> Inscrit#}
+                {#                                    {%- elseif guest[0].status == 'decline' -%}#}
+                {#                                        <i class="fas fa-times-circle fa-fw text-danger"></i> Refus#}
+                {#                                    {%- elseif guest[0].status == 'participant' -%}#}
+                {#                                        <i class="fas fa-check-circle fa-fw text-success"></i> Participant#}
+                {#                                    {%- elseif guest.upTotal -%}#}
+                {#                                        <i class="fas fa-user-clock fa-fw"></i> Relancé#}
+                {#                                    {%- elseif guest.invitationTotal -%}#}
+                {#                                        <i class="fas fa-user-clock fa-fw"></i> Invité#}
+                {#                                    {%- else -%}#}
+                {#                                        <i class="fas fa-question-circle fa-fw text-danger"></i> En attente#}
+                {#                                    {%- endif -%}#}
+            {%- endset %}
+            {% set infos %}
+                {%- if guest[0].isSwitched and guest[0].root -%}
+                    Permuté dans &quot;{{ guest[0].root.event.name }}&quot;
+                {% endif -%}
+                {%- if guest.optout %}
+                    {{- 'Cet e-mail est désinscrit de la plateforme. ' -}}
+                {%- endif -%}
+                {%- if guest.invitationTotal > 1 -%}
+                    {{ guest.invitationTotal }} invitations envoyées.
+                {%- elseif guest.invitationTotal -%}
+                    {{ guest.invitationTotal }} invitation envoyée.
+                {%- else -%}
+                    Aucune invitation envoyée.
+                {%- endif -%}
+                {%- if guest.invitationTotal > 0 -%}
+                    {%- if guest.upTotal > 1 -%}
+                        {{ ' ' }}{{ guest.upTotal }} relances envoyées.
+                    {%- elseif guest.upTotal -%}
+                        {{ ' ' }}{{ guest.upTotal }} relance envoyée.
+                    {%- else -%}
+                        {{ ' ' }}Aucune relance envoyée.
+                    {%- endif -%}
+                {%- endif -%}
+            {% endset %}
+            <tr data-bs-tooltip="true" title="{{ infos }}">
+                <td class="text-center dropdown">
+                    <a href="{{ path('guest_actions', {id: guest[0].id}) }}" data-toggle="load-modal">
+                        <i class="fas fa-bars"></i>
+                        <span class="sr-only">Actions</span>
+                    </a>
+                </td>
+                <td data-search="{{ status|striptags }}">
+                    {{ status }}
+                </td>
+                <td>{{ guest[0].email }}</td>
+                <td>{{ guest[0].displayGender }}</td>
+                <td>{{ guest[0].lastName }}</td>
+                <td>{{ guest[0].firstName }}</td>
+                <td>{{ guest[0].phone }}</td>
+                <td>{{ guest[0].company }}{% if guest[0].siret %} ({{ guest[0].siret }}){% endif %}</td>
+                {% if not guest[0].isPending %}
+                    <td data-order="{{ guest[0].updatedAt|format_date(pattern="yMMddHHmm", locale="fr") }}">
+                        {{ guest[0].updatedAt|format_date(pattern="dd/MM @ H:mm", locale="fr") }}
+                    </td>
+                {% else %}<td></td>{% endif %}
+                <td class="text-center">
+                    {% if guest[0].type == 'sidekick' %}
+                        <span class="far fa-user-friends"></span>
+                        <span class="sr-only">Accompagnant</span>
+                    {% elseif guest[0].type == 'prospect' %}
+                        <span class="fas fa-user-plus"></span>
+                        <span class="sr-only">Prospect</span>
+                    {% else %}
+                        <span class="fas fa-user"></span>
+                        <span class="sr-only">Invité</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ guest[0].inspecteurCommercial }}</td>
+                <td class="text-center">
+                    {% if guest.optout %}
+                        <i class="fas fa-bell-slash fa-fw text-danger"></i>
+                        <span class="sr-only">Optout</span>
+                    {% else %}
+                        <i class="fas fa-bell fa-fw text-success"></i>
+                        <span class="sr-only">Optin</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('datatables') }}
+    <script>
+      // Contact dropdown
+      $('.dropdown').on('show.bs.dropdown', function() {
+        var $this = $(this);
+        $this
+          .children('.dropdown-menu')
+          .css({
+            position: 'absolute',
+            left: $this.offset().left,
+            top: $this.offset().top
+          })
+          .appendTo($('body'))
+        ;
+      }).on('hidden.bs.dropdown', function() {
+        var $this = $(this);
+        var $children = $('[aria-labelledby="'+$this.attr('id')+'"]');
+
+        $children.attr('style', '').appendTo($this);
+      });
+
+      // Table
+      var table = $('#table-contacts').DataTable({
+        order: [[2, "asc"]],
+        columnDefs: [
+          { targets: 'no-sort', orderable: false }
+        ],
+        fixedColumns: {
+          left: 1,
+          right: 2,
+        }
+      });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Utilisateurs{% endblock %}
+{% block pageTitle %}Utilisateurs{% endblock %}
+
+{% block content %}
+
+    <div class="text-lg-end">
+        <a href="{{ path('app_user_create') }}" data-toggle="load-modal" class="btn btn-primary btn-sm btn-icon-split">
+            <span class="icon"><i class="fas fa-user-plus"></i></span>
+            <span class="text">Nouvel utilisateur</span>
+        </a>
+    </div>
+
+    <div class="container bg-white shadow my-2 py-3">
+    <table id="userTable" class="table table-striped w-100">
+        <thead>
+        <tr class="bg-secondary text-dark small">
+            <th class="text-center no-sort">
+                #
+            </th>
+            <th class="fw-bold">
+                Prénom
+            </th>
+            <th class="fw-bold">
+                Nom
+            </th>
+            <th class="fw-bold">
+                Email
+            </th>
+            <th class="text-center fw-bold">
+                Téléphone
+            </th>
+            <th class="text-center fw-bold">
+                Admin
+            </th>
+            <th class="text-center fw-bold">
+                Switch
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+        <tr>
+            <td class="text-center">
+                <a href="{{ path('app_user_edit', {id: user.id}) }}" data-toggle="load-modal" data-tooltip="true" title="Editer">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </td>
+            <td>{{ user.firstName }}</td>
+            <td>{{ user.lastName }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.phone }}</td>
+            <td class="text-center" data-order="{{ 'ROLE_ADMIN' in user.roles ? '1' : '0' }}">
+                {{ 'ROLE_ADMIN' in user.roles ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times"></i>' }}
+            </td>
+            <td class="text-center no-sort">
+                <a href="{{ path('app_index', {_switch_user: user.email}) }}">
+                    <i class="fas fa-people-arrows"></i>
+                    <span class="sr-only">Switch</span>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('datatables') }}
+    <script>
+        $('#userTable').DataTable({
+            order: [[1, "asc"]],
+            columnDefs: [
+                { targets: 'no-sort', orderable: false }
+            ]
+        });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+{% endblock %}

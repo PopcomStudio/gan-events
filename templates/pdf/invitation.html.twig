@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invitation</title>
+    <style>
+        @page {
+            margin: 0;
+        }
+
+        body {
+            font-family: OpenSans, sans-serif;
+            color: {{ color }};
+            font-weight: normal;
+        }
+
+        .arrow-wrapper {
+            background: {{ secondary }};
+            width: 70px;
+            height: .75cm;
+            position: absolute;
+            right: 1cm;
+            top: 0;
+        }
+
+        .arrow {
+            position: absolute;
+            top: .75cm;
+            left: 35px;
+            display: block;
+            width: 100%;
+            border-bottom: 35px solid #ffd631;
+            border-left: 35px solid {{ secondary }};
+            border-right: 35px solid transparent;
+        }
+    </style>
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="0" style="position:absolute;width:100%;height:100%;">
+    <tr>
+        <td style="width:10cm" valign="top">
+            {% if guest.event.visual %}
+                <img src="{{ visual }}" alt="" width="100%">
+            {% endif %}
+        </td>
+        <td style="width:11cm" valign="top">
+            <div class="arrow-wrapper"><div class="arrow"></div></div>
+            <div style="margin:0.5cm;height:100%;">
+                <div style="height:100%;background-color:{{ light }};position:relative;">
+                    <div style="padding:0.5cm;">
+                        <div style="text-transform:uppercase;margin-top:-.2cm;margin-bottom:.2cm;font-size:.8em">
+                            Invitation
+                        </div>
+                        <div style="width:1cm;height:.07cm;background-color:{{ primary }};"></div>
+                        <div style="font-family:OpenSansExtra;color:{{ primary }};font-size:1.5em;line-height:0.8;margin-top:0.3cm;">
+                            {{ event.name }}
+                        </div>
+                        <div>
+                            {{ event.beginAt|format_datetime(pattern="eee d MMM y, H:mm", locale="fr")|capitalize }}
+                        </div>
+                        <div style="margin-top:1cm;font-weight:bold">
+                            {{ guest.displayName }}
+                        </div>
+                        <div style="font-size:.8em;margin-top:-.1cm">{{ guest.email }}</div>
+                    </div>
+                    <div style="position:absolute;bottom:.5cm;right:.5cm;">
+                        <img src="{{ qrcode }}" alt="" style="width:2cm;height:2cm">
+                    </div>
+                    <div style="position:absolute;bottom:.5cm;left:.5cm;right:2.5cm;">
+                        Inscrivez-vous :<br/>
+{#                        Plus d'infos &amp; Réservation<br />#}
+                        <a href="{{ event_url }}" style="color:{{ primary }};font-weight:bold;font-size:.7em;">{{ event_uri }}</a>
+                    </div>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

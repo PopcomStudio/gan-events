@@ -1,0 +1,572 @@
+{% extends 'base.html.twig' %}
+
+{% import _self as _macro %}
+
+{% set fiche = {
+    'Titre': event.movieTitle,
+    'Sortie le': event.movieReleasedAt ? event.movieReleasedAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize : null,
+    'Réalisé par': event.movieDirectedBy,
+    'Avec': event.movieStarredBy,
+    'Genres': event.movieGenres,
+    'Récompensé par': event.movieAwards,
+    'Pays': event.movieCountries,
+    'Durée': event.movieRunningTime,
+} %}
+
+{% block body %}
+    <div class="mx-3 mx-lg-5 mt-3 mt-lg-5 event-header bg-light bg-cover"{% if event.visual %} style="background-image: url({{ vich_uploader_asset(event.visual, 'file')|imagine_filter('event_header') }})"{% endif %}>
+        <div>
+        <div class="container-lg">
+            <div class="bg-secondary mt-n5 ms-auto me-0 px-2 pt-5 pb-2 text-center gan-arrow">
+                {{ event.target|default('événement') }}
+            </div>
+        </div>
+        </div>
+    </div>
+    <div class="mx-3 mx-lg-5">
+    <div class="container-lg">
+        <div class="row flex-md-row-reverse">
+            <div class="col-12 col-md-5 col-lg-4 mt-n3 mt-md-n5">
+                <div class="card bg-dark">
+                    <div class="card-body">
+                        <h2 class="text-white text-uppercase h4 border-bottom border-2x pb-3 mb-0">Informations</h2>
+                    </div>
+                    <ul class="list-group list-group-flush pb-3 border-top-0">
+                        <li class="list-group-item d-flex align-items-center bg-dark">
+                            <span class="btn-circle bg-white text-dark me-3 flex-shrink-0">
+                                <i class="fas fa-calendar-alt fa-fw"></i>
+                            </span>
+                            <span class="d-block text-white" style="line-height: 1.1">
+                            {% if event.finishAt is null %}
+                                <span class="d-block fw-bold">
+                                    {{ event.beginAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize }}
+                                </span>
+                                <span class="d-block small">
+                                    {{ event.beginAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                </span>
+                            {% elseif event.beginAt|date('Ymd') == event.finishAt|date('Ymd') %}
+                                <span class="d-block">
+                                    <span class="fw-bold">
+                                        {{ event.beginAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize }}
+                                    </span>
+                                    <span class="small d-block">
+                                        de
+                                        {{ event.beginAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                        à
+                                        {{ event.finishAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                    </span>
+                                </span>
+                            {% else %}
+                                <span class="d-block">
+                                    <span class="small">
+                                        Du
+                                    </span>
+                                    <span class="fw-bold">
+                                        {{ event.beginAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize }}
+                                    </span>
+                                    <span class="small">
+                                        {{ event.beginAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                    </span>
+                                </span>
+                                <span class="d-block">
+                                    <span class="small">
+                                        au
+                                    </span>
+                                    <span class="fw-bold">
+                                        {{ event.finishAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize }}
+                                    </span>
+                                    <span class="small">
+                                        {{ event.finishAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                    </span>
+                                </span>
+                            {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center bg-dark">
+                            <span class="btn-circle bg-white text-dark me-3 flex-shrink-0">
+                                <i class="fas fa-user-tie fa-fw"></i>
+                            </span>
+                            <span class="d-block text-white" style="line-height: 1.1">
+                                <span class="d-block fw-bold">
+                                    {% if guest is defined %}{{ guest.sender.displayName }}
+                                    {% elseif eventHelper.currentSender %}{{ eventHelper.currentSender.displayName }}
+                                    {% else %}{{ app.user.displayName }}{% endif %}
+                                </span>
+                                <span class="d-block small">
+                                    vous convie{% if eventHelper.currentSender and eventHelper.currentSender.plural %}nt{% endif %}
+                                </span>
+                            </span>
+                        </li>
+                        {% if addressFirstLine %}
+                        <li class="list-group-item d-flex align-items-center bg-dark">
+                            <span class="btn-circle bg-white text-dark me-3 flex-shrink-0">
+                                <i class="fas fa-map-marker-alt fa-fw"></i>
+                            </span>
+                            <span class="d-block text-white" style="line-height: 1.1">
+                                <span class="d-block fw-bold">
+                                    {{ addressFirstLine }}
+                                </span>
+                                {% if address %}
+                                <span class="d-block small">
+                                    {{ address|nl2br }}
+                                </span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% if event.lat and event.lng %}
+                    <div id="map" style="height:300px" class="mx-2 mb-2"></div>
+                    {% endif %}
+                    {% for other in eventHelper.relatedEvents %}
+                        {% if loop.first %}
+                            <div class="card-body pb-0">
+                                <h2 class="text-white text-uppercase h5 border-bottom pb-3 mb-0">Choisir une autre date</h2>
+                            </div>
+                            <ul class="list-group list-group-flush pb-3 text-white"{% if preview is defined %} data-bs-tooltip="true" title="Désactiver pour la prévisualisation" data-placement="bottom"{% endif %}>
+                        {% endif %}
+                            <li class="list-group-item bg-dark text-white">
+                                {% if preview is not defined %}<a href="{{ path('public_event_show', {slug: event.slug, id: other.id}) }}" class="text-white">{% endif %}
+                                {{ other.name }}
+                                <span class="d-block small">
+                                    {{ other.beginAt|format_datetime(pattern="eeee dd MMMM y", locale="fr")|capitalize }}
+                                </span>
+                                {% if preview is not defined %}</a>{% endif %}
+                            </li>
+                        {% if loop.last %}
+                            </ul>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-12 col-md-7 col-lg-8 my-5 fw-bold">
+                <h1 class="display-2 text-dark separator-top mb-4">{{ event.name }}</h1>
+                <div class="row">
+                    <div class="offset-1 col-11">
+                        <div class="mb-5"> {{ event.description|raw }}</div>
+                        {% if event.type == 'projection' %}
+                            {% if event.moviePoster %}
+                            <div class="row mt-4 ms-0">
+                                <div class="col-12 col-sm-4 col-md-12 col-lg-4">
+                                    <img src="{{ vich_uploader_asset(event.moviePoster, 'file')|imagine_filter('movie_poster') }}" alt="Affiche {{ event.movieTitle }}" class="img-fluid"/>
+                                </div>
+                                <div class="col-12 mt-3 col-sm-8 mt-sm-0 col-md-12 mt-md-3 col-lg-8 mt-lg-0">
+                            {% endif %}
+                                <h3 class="h5 text-dark">Fiche détaillée</h3>
+                                <table class="table small">
+                                    {% for key, value in fiche %}{% if value %}
+                                    <tr>
+                                        <th scope="row" class="pl-0 text-nowrap{% if loop.first %} border-0{% endif %}">{{ key }}</th>
+                                        <td class="pr-0{% if loop.first %} border-0{% endif %}">
+                                            {% if key == 'Durée' %}
+                                                {{ (value / 60)|round(0, 'floor') }}h
+                                                {{- (value % 60)|format_number({min_integer_digit: 2}) }}
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}{% endfor %}
+                                </table>
+                                {% if event.movieOverview %}
+                                    <h4 class="h5 text-dark">Synopsis</h4>
+                                    <p class="small">{{ event.movieOverview }}</p>
+                                {% endif %}
+                            {% if event.moviePoster %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% elseif event.type == 'ateliers' %}
+                            <h2 class="h4 fw-extra-bold text-dark mb-3">
+                                <i class="fas fa-chalkboard-teacher text-primary me-2"></i>Ateliers proposés
+                            </h2>
+                            <div class="list-group">
+                                {% for workshop in event.workshops %}
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <h5 class="mb-1">{{ workshop.name }}</h5>
+                                        </div>
+                                        {% if workshop.description %}
+                                            <p class="mb-1 small text-muted">{{ workshop.description|nl2br }}</p>
+                                        {% endif %}
+                                        {# Affichage des créneaux si disponibles #}
+                                        {% if workshop.timeSlots is defined and workshop.timeSlots|length > 0 %}
+                                            <small class="text-muted">
+                                                <i class="far fa-clock me-1"></i>
+                                                {% for wts in workshop.timeSlots %}
+                                                    {{ wts.getTimeSlot.startAt|date('H:i') }} - {{ wts.getTimeSlot.endAt|date('H:i') }}{% if not loop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elseif event.type == 'standard_plus_moments' %}
+                            <h2 class="h4 fw-extra-bold text-dark mb-3">
+                                <i class="fas fa-star text-warning me-2"></i>Temps Forts
+                            </h2>
+                            <div class="list-group">
+                                {% for moment in event.moments %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h5 class="mb-1">{{ moment.name }}</h5>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ moment.beginAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                        {% if moment.finishAt %}
+                                                - {{ moment.finishAt|format_datetime(pattern="H:mm", locale="fr") }}
+                                        {% endif %}
+                                        </small>
+                                    </div>
+                                    {% if moment.description %}
+                                        <p class="mb-1 small text-muted">{{ moment.description|nl2br }}</p>
+                                    {% endif %}
+                                    {% if moment.location %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ moment.location }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="bg-light mx-3 mx-lg-5 mt-5">
+        <div class="container-fluid container-lg py-5">
+            <h2 class="display-3 separator-top text-dark mb-3">Inscrivez-vous</h2>
+            {{ form_start(form) }}
+
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+
+            {{ form_row(form.gender) }}
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.email) }}
+                </div>
+                {%  if form.phone is defined %}
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.phone) }}
+                </div>
+                {% endif %}
+                {% if form.company is defined %}
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.company) }}
+                    </div>
+                {% endif %}
+                {% if form.siret is defined %}
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.siret) }}
+                    </div>
+                {% endif %}
+                {% if event.type == 'standard_plus_moments' %}
+                <div class="col-12 mb-4">
+                    {% set obligatoryMoments = event.moments|filter(m => m.type == 'obligatoire') %}
+                    {% set optionalMoments = event.moments|filter(m => m.type == 'facultatif') %}
+
+                    {% if obligatoryMoments|length > 0 %}
+                    <h3 class="h5 text-dark mb-3">
+                        Présence obligatoire
+                    </h3>
+                    <div class="form-group mb-4">
+                        <ul class="list-unstyled">
+                            {% for moment in obligatoryMoments %}
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {{ moment.name }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if optionalMoments|length > 0 %}
+                    <h3 class="h5 text-dark mb-3">
+                        Je m'inscris aux temps forts facultatifs
+                    </h3>
+                    <div class="form-group">
+                        {{ form_widget(form.momentChoices) }}
+                    </div>
+                    {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            {% if form.golf is defined %}
+                {{ form_row(form.golf) }}
+                <div class="row" id="golf">
+                    <div class="col-12 col-md-6 golf-licence">
+                        {{ form_row(form.golfLicense) }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.golfIndex) }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if form.workshops is defined %}
+                {{ form_row(form.workshops) }}
+            {% endif %}
+
+            {% if form.prospects is defined -%}
+            <div class="my-5">
+                <h3 class="display-4 separator-top text-dark mb-3">
+                    {{ form.prospects.vars.label }}
+
+                </h3>
+                <div class="repeater" data-prototype="{{ _macro.prospect_form(form.prospects.vars.prototype, 'Invité #__name__')|e('html_attr') }}">
+                    {% for key, prospect in form.prospects %}
+                        {{ _macro.prospect_form(prospect, 'Invité #'~(key+1)) }}
+                    {% endfor %}
+                </div>
+                {% do form.prospects.setRendered %}
+            </div>
+            {% endif %}
+
+            {% if form.sidekicks is defined -%}
+            <div class="my-5">
+                <h3 class="display-4 separator-top text-dark mb-3">
+                    {{ form.sidekicks.vars.label }}
+                </h3>
+                <div class="repeater" data-prototype="{{ _macro.sidekick_form(form.sidekicks.vars.prototype, 'Accompagnant #__name__')|e('html_attr') }}" data-limit="{% if guest is defined %}{{ guest.sender.sidekicks }}{% elseif eventHelper.currentSender %}{{ eventHelper.currentSender.sidekicks }}{% endif %}">
+                    {% for key, prospect in form.sidekicks %}
+                        {{ _macro.sidekick_form(prospect, 'Invité #'~(key+1)) }}
+                    {% endfor %}
+                </div>
+                {% do form.sidekicks.setRendered %}
+            </div>
+            {% endif %}
+
+            {% if form.privacyPolicy is defined %}
+                <div class="mt-4 pt-4 border-top">
+                {{ form_row(form.privacyPolicy) | replace({'__privacyPolicy__':'<a type="button" class="btn-link" data-bs-toggle="modal" data-bs-target="#Politique-de-confidentialite">politique de confidentialité</a>'}) | raw }}
+                </div>
+            {% endif %}
+
+            <div class="text-end">
+                {% if preview is defined %}<span class="d-inline-block" style="cursor: not-allowed;" data-bs-tooltip="true" title="Désactivé pour la prévisualisation">{% endif %}
+                <button type="submit" class="btn btn-primary"{% if preview is defined %} disabled style="pointer-events: none;"{% endif %}>
+                    {% if guest is defined and guest.isRegistered() %}
+                        Mettre à jour mes choix
+                    {% else %}
+                        S'inscrire <i class="far fa-calendar-check ms-1"></i>
+                    {% endif %}
+                </button>
+
+                <span class="d-block">
+                <a href="{{ guest is defined and guest.uuid ? path('public_event_decline', {
+                    id: event.id, uuid: guest.uuid
+                }) : '#' }}" class="small ms-2 text-gray"{% if preview is defined %} disabled style="pointer-events: none;"{% endif %}>ou décliner l'invitation</a>
+                </span>
+
+                {% if preview is defined %}</span>{% endif %}
+
+            </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+    <div class="mx-3 mx-lg-5 mt-3 mb-3">
+        <div class="container-lg d-flex justify-content-between align-items-center">
+            <div>
+                <a href="https://www.gan.fr/" target="_blank"><img src="{{ asset('assets/images/logo-gan.png') }}" alt="Gan Assurances" class="img-fluid" /></a>
+                {% if event.foundation %}
+                    <a href="https://www.fondation-gan.com/" target="_blank"><img src="{{ asset('assets/images/logo-gan-cinema.png') }}" alt="Fondation Gan pour le cinéma" class="img-fluid ms-2" /></a>
+                {% endif %}
+            </div>
+
+            {% if event.logo %}
+                <div><img src="{{ vich_uploader_asset(event.logo, 'file')|imagine_filter('event_logo') }}" class="img-fluid" alt="{{ event.name|e('html_attr') }}"></div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="text-center small py-3">
+       Copyright © {{ "now"|date('Y')}} Gan Assurances, tous droits réservés
+        {% for title, content in legal %}
+            -
+            {% include '_partial/modal.html.twig' with {title, content} only %}
+        {% endfor %}
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('form-repeater') }}
+    {{ encore_entry_script_tags('cleave') }}
+    {% if event.lat and event.lng %}
+        <script>
+            var event_lat = {{ event.lat }},
+                event_lng = {{ event.lng }};
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api }}&callback=initMap&libraries=&v=weekly" async></script>
+        {{ encore_entry_script_tags('event-front') }}
+    {% endif %}
+    <script>
+
+      // Format phone number
+      var cleave = new Cleave('#guest_phone', {
+        phone: true,
+        phoneRegionCode: 'fr',
+      });
+
+      if ($('.golf-licence').length) {
+        // Format licence golf
+        var golfCleave = new Cleave('#guest_golfLicense', {
+          numericOnly: true,
+          delimiter: ' ',
+          blocks: [3, 3, 3]
+        });
+      }
+      // Format SIRET
+      var $siret = $('input.siret');
+      if ($siret.length && !$siret.hasClass('icx')) {
+
+        var siretCleave = new Cleave($siret, {
+          blocks: [3, 3, 3, 5],
+        });
+
+        $siret.on('change keypress keyup blur', function (e) {
+
+          var $this = $(this),
+            val = $this.val().replace(/[^0-9 ]/g, '');
+
+          $this.val(val);
+        });
+      }
+
+      $('.repeater').each(function () {
+        var manager = new RepeaterManager();
+        manager.init($(this));
+      }).on('added.repeater prepared.row.repeater', function (e, el) {
+        bootstrap.Tooltip.getOrCreateInstance(el.find('[data-bs-tooltip="true"]'));
+      }).on('delete.repeater', function (e, el) {
+        bootstrap.Tooltip.getOrCreateInstance(el.find('[data-bs-tooltip="true"]')).dispose();
+      });
+
+      // Golf
+      $('input[name="guest[golf]"]').on('change', function () {
+
+        var $this = $('input[name="guest[golf]"]:checked'),
+          $golfRow = $('#golf'),
+          val = $this.val();
+
+        if (val === '1') {
+
+          if (!$golfRow.is(':visible')) $golfRow.slideDown(200);
+
+        } else {
+
+          if ($golfRow.is(':visible')) $golfRow.slideUp(200);
+        }
+      }).trigger('change');
+
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var $container = document.querySelector('.moment-choices');
+            var $addButton = document.querySelector('.add-moment-choice');
+            var index = $container.children.length;
+
+            $addButton.addEventListener('click', function() {
+                var prototype = $container.dataset.prototype;
+                var newForm = prototype.replace(/__name__/g, index);
+                var div = document.createElement('div');
+                div.className = 'moment-choice';
+                div.innerHTML = newForm;
+                
+                // Ajouter un bouton de suppression
+                var removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'btn btn-outline-danger btn-sm mt-2';
+                removeButton.innerHTML = '<i class="fas fa-trash"></i> Supprimer';
+                removeButton.addEventListener('click', function() {
+                    div.remove();
+                });
+                
+                div.appendChild(removeButton);
+                $container.appendChild(div);
+                index++;
+            });
+
+            // Ajouter des boutons de suppression aux choix existants
+            document.querySelectorAll('.moment-choice').forEach(function(div) {
+                var removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'btn btn-outline-danger btn-sm mt-2';
+                removeButton.innerHTML = '<i class="fas fa-trash"></i> Supprimer';
+                removeButton.addEventListener('click', function() {
+                    div.remove();
+                });
+                div.appendChild(removeButton);
+            });
+        });
+    </script>
+{% endblock %}
+
+{% macro prospect_form(form, name) %}
+
+    <div class="repeater-child card shadow mb-2">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            {{ name }}
+            <button type="button" class="btn btn-sm btn-danger" data-bs-tooltip="true" title="Retirer l'invité"
+                    data-delete-row="true">
+                <i class="fas fa-user-slash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+
+            {{ form_row(form.gender) }}
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="col-12{% if form.company is defined %} col-lg-6{% endif %}">
+                    {{ form_row(form.email) }}
+                </div>
+                {% if form.company is defined %}
+                    <div class="col-12 col-lg-6">
+                        {{ form_row(form.company) }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endmacro %}
+
+{% macro sidekick_form(form, name) %}
+
+    <div class="repeater-child card shadow mb-2">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            {{ name }}
+            <button type="button" class="btn btn-sm btn-danger" data-bs-tooltip="true" title="Retirer l'invité"
+                    data-delete-row="true">
+                <i class="fas fa-user-slash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endmacro %}

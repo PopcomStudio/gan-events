@@ -1,0 +1,71 @@
+.form-switch {
+  .form-check-input {
+    border-radius: $form-switch-border-radius;
+  }
+}
+
+.repeater {
+  .repeater-child {
+    position: relative;
+
+    & > .buttons {
+      position: absolute;
+      width: 3.25rem;
+      top: 50%;
+      left: -2.25rem;
+      margin-top: -62px;
+      opacity: 0;
+      transition: opacity .2s;
+
+      .icon-split.btn-sm {
+        .icon {
+          width: 2rem;
+          text-align: center;
+        }
+      }
+    }
+
+    &:hover {
+      & > .buttons {
+        opacity: 1;
+      }
+    }
+
+    &:first-child {
+      & > .buttons {
+        margin-top:-46px;
+
+        [data-action="up"] {
+          display: none;
+        }
+      }
+    }
+
+    &:last-of-type {
+      & > .buttons {
+        margin-top:-46px;
+
+        [data-action="down"] {
+          display: none;
+        }
+      }
+    }
+
+    &:first-child:last-of-type {
+      & > .buttons {
+        margin-top:-31px;
+
+        [data-action="up"],
+        [data-action="down"]{
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+//.col-form-label, .form-group > label {
+//  @include font-size(14px);
+//  text-transform: uppercase;
+//  font-weight: $font-weight-bold;
+//}

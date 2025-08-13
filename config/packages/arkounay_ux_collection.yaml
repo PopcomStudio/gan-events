@@ -1,0 +1,12 @@
+arkounay_ux_collection:
+    default_entry_options:
+        label: false
+    default_collection_options:
+        allow_add: true
+        allow_delete: true
+        allow_drag_and_drop: true
+        display_sort_buttons: true
+        add_label: 'Ajouter'
+        delete_label: 'Supprimer'
+        sort_up_label: 'Monter'
+        sort_down_label: 'Descendre' 

@@ -1,0 +1,39 @@
+{% if form is defined %}
+    {{ form_start(form, {attr: {class: 'modal-content'}}) }}
+{#    <div class="modal-content w-100">#}
+        <div class="modal-header bg-primary">
+            <h5 class="modal-title text-white" id="modalLabel">
+                Modèle d'email
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body mb-0">
+            {{ form_errors(form) }}
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+            {% if form.sender is defined %}{{ form_row(form.sender) }}{% endif %}
+            {{ form_widget(form) }}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+            <script>
+                tinymce_reload();
+            </script>
+        </div>
+{#    </div>#}
+    {{ form_end(form) }}
+{% else %}
+    <div class="modal-content">
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+        </div>
+        <script>
+            var url = window.location.href;
+            var hash = window.location.hash;
+            var index_of_hash = url.indexOf(hash) || url.length;
+            url = url.substr(0, index_of_hash);
+            window.location.href = url+'#template';
+            document.location.reload();
+        </script>
+    </div>
+{% endif %}

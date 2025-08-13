@@ -1,0 +1,24 @@
+{% if guest.event.type == 'standard_plus_moments' %}
+    <div class="card shadow mb-2">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Temps forts</h5>
+        </div>
+        <div class="card-body">
+            {% if guest.moments|length > 0 %}
+                <ul class="list-group">
+                    {% for moment in guest.moments %}
+                        <li class="list-group-item">
+                            <strong>{{ moment.name }}</strong><br>
+                            {{ moment.beginAt|date('d/m/Y H:i') }} - {{ moment.finishAt|date('H:i') }}
+                            {% if moment.location %}
+                                <br><small class="text-muted">{{ moment.location }}</small>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">Aucun moment clé sélectionné</p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %} 

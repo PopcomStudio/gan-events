@@ -1,0 +1,55 @@
+# See dos how to configure the bundle: https://symfony.com/doc/current/bundles/LiipImagineBundle/basic-usage.html
+liip_imagine:
+    # valid drivers options include "gd" or "gmagick" or "imagick"
+    driver: "gd"
+    resolvers:
+        default:
+            web_path:
+                web_root: '%kernel.project_dir%/public/'
+#                web_root: '%kernel.root_dir%/../public/'
+                cache_prefix: 'media'
+    loaders:
+        default:
+            filesystem:
+                data_root: '%kernel.project_dir%/public/'
+                bundle_resources:
+                    enabled: true
+#                data_root: '%kernel.root_dir%/../public/'
+    filter_sets:
+        cache: ~
+        movie_poster: # Nom du filtre
+            quality: 60
+            filters:
+                scale:
+                    dim: [ 452, 670]
+        event_header: # Nom du filtre
+            quality: 75
+            filters:
+                fixed:
+                    width: 2560
+                    height: 1024
+        email_header: # Nom du filtre
+            quality: 70
+            filters:
+                fixed:
+                    width: 600
+                    height: 300
+        event_logo: # Nom du filtre
+            quality: 100
+            filters:
+                scale:
+                    dim: [ 100, 80 ]
+        event_ticket: # Nom du filtre # 150 ppp
+            quality: 75
+            filters:
+                fixed:
+                    width: 585
+                    height: 585
+        thumbnail: # Nom du filtre
+            quality: 70
+            filters:
+                fixed:
+                    width: 100
+                    height: 100
+    twig:
+        mode: "lazy"

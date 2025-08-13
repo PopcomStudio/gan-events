@@ -1,0 +1,71 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-users me-2"></i>
+                Configuration des expéditeurs
+            </div>
+            <a href="{{ path('sender.new', {id: event.id}) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle me-1"></i>
+                <span class="d-none d-md-inline">Créer un expéditeur</span>
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-0">
+                <p class="mb-0" role="button" data-bs-toggle="collapse" data-bs-target="#more-infos" aria-expanded="false" aria-controls="more-infos">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Qu'est-ce qu'un expéditeur&nbsp;?
+                </p>
+                <div class="collapse small mt-2" id="more-infos">
+                    <p>Chaque expéditeur a ses propres limitations et sa propre liste de contacts.</p>
+                    <p>
+                        Il peut être associé à un utilisateur pour lui donner accès à la gestion de ses emails et contacts.
+                        Le cas échéant, le gestionnaire de l'événement peut administrer ces informations depuis la vue associé.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% for sender in event.senders %}
+            {% if loop.first %}
+            <div class="list-group list-group-flush">
+            {% endif %}
+                <div class="list-group-item">
+                    <p class="mb-0">
+                        <span class="badge bg-dark me-1">#{{ sender.id }}</span>
+                        <a href="{{ path('sender.edit', {id: sender.id}) }}">
+                        {% if sender.user %}
+                            {% if sender.user == app.user %}
+                                Moi
+                            {% else %}
+                                {{ sender.publicEmail }}
+                            {% endif %}
+                        {% else %}
+                            {{ sender.publicEmail|default('Non défini') }}
+                        {% endif %}
+                        </a>
+                    </p>
+                    <span class="small text-muted">
+                        {{ sender.displayName }} vous convie{{ sender.plural ? 'nt' : '' }}
+                        {{ sender.publicEmail ? '- '~sender.publicEmail : '' }}
+                    </span>
+                </div>
+            {% if loop.last %}
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="card-body">
+            Aucun expéditeur créé.
+        </div>
+        {% endfor %}
+        <div class="card-footer text-end">
+            <a href="{{ path('sender.new', {id: event.id}) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle me-1"></i>
+                <span class="d-none d-md-inline">Créer un expéditeur</span>
+            </a>
+        </div>
+    </div>
+
+{% endblock %}

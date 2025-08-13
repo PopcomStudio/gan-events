@@ -1,0 +1,108 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+    <div class="card shadow mb-2">
+        <div class="card-header fw-bold text-dark d-flex justify-content-start align-items-center">
+            <span class="badge bg-dark me-1">#{{ sender.id }}</span>
+            {% if sender.user %}
+                {% if sender.user == app.user %}
+                    Moi
+                {% else %}
+                    {{ sender.publicEmail }}
+                {% endif %}
+            {% elseif not sender.id %}
+                Nouvel expéditeur
+            {% else %}
+                {{ sender.publicEmail|default('Non défini') }}
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {{ form_row(form.user) }}
+            <div class="row">
+                {% if form.user.vars.data %}
+                    <div class="col-md-6">
+                        {{ form_row(form.name, {attr: {placeholder: form.user.vars.data.displayName}, help: 'Remplace le nom de l\'utilisateur dans les communications.'}) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.email, {attr: {placeholder: form.user.vars.data.email}, help: 'Remplace l\'email de l\'utilisateur dans les communications.'}) }}
+                    </div>
+                {% else %}
+                    <div class="col-md-6">
+                        {{ form_row(form.name) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.email) }}
+                    </div>
+                {% endif %}
+            </div>
+            {{ form_row(form.plural) }}
+        </div>
+        <div class="card-body border-top">
+            <div class="row">
+                <div class="col-12">
+                    {{ form_row(form.guestType) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.allocatedTickets) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.overbooking) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.sidekicks) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.prospects) }}
+                </div>
+            </div>
+        </div>
+        {% if form.autonomyOnEmails is defined %}
+        <div class="card-body border-top">
+            <div class="row">
+                <div class="col-12 fw-bold mb-2">
+                    Quels sont les droits de l'expéditeur&nbsp;?
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.autonomyOnEmails) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.autonomyOnSchedule) }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="card-body border-top">
+            <div class="row">
+                <div class="col-12">
+                    {{ form_row(form.legalNoticeSender) }}
+                    <div class="card">
+                        <div class="card-header fw-bold bg-dark text-white">
+                            Mentions légales utilisées par défaut&nbsp;
+                        </div>
+                        <div class="card-body bg-light text-muted small">
+                            {{ legal|raw }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if sender.id %}
+        <a href="{{ path('sender.delete', {id: sender.id}) }}" class="text-danger small">Supprimer</a>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+      var filemanager_url = "{{ path('filemanager_browse', {type: 'event', id: event.id}) }}"
+    </script>
+    {{ encore_entry_script_tags('select2') }}
+    {{ encore_entry_script_tags('tinymce') }}
+    <script>
+      $('select[data-init="select2"]').select2({
+        allowClear: true,
+        tags: true,
+      });
+    </script>
+{% endblock %}

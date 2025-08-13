@@ -1,0 +1,289 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="container px-0">
+        <div class="row no-gutters">
+            <div class="col-12">
+                {% if eventInfo is defined %}
+                    <div class="card mb-2">
+                        <div class="card-body border-left border-primary">
+                            <div class="row">
+                                <div class="col-12 col-lg-3">
+                                    <h3 class="h4 fw-normal my-2">Chiffres clés de l'événement {% if event.closedAt != null %}passés{% endif %}</h3>
+                                </div>
+                                <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes inscrites à l'événement">
+                                    <span class="h2 d-block text-dark mb-0">
+                                        {{ eventInfo.totalTickets }}
+                                        {%- if event.totalTickets -%}
+                                            <span class="small text-gray"> / {{ event.totalTickets }}</span>
+                                        {% endif %}
+                                    </span>
+                                    <span class="badge bg-dark">
+                                    {% if eventInfo.totalTickets > 1 %}
+                                        inscrits
+                                        {%- if event.totalTickets %} ({{ eventInfo.percentTickets }}%){% endif -%}
+                                    {% else %}inscrit{% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes qui ont répondu (accepté ou refusé)">
+                                <span class="h2 d-block text-dark mb-0">
+                                    {{ eventInfo.totalReplies }}
+                                    <span class="small text-gray"> / {{ eventInfo.totalGuests }}</span>
+                                </span>
+                                    <span class="badge bg-dark">
+                                    {% if eventInfo.totalReplies > 1 %}réponses ({{ eventInfo.percentReplies }}%){% else %}réponse{% endif %}
+                                </span>
+                                </div>
+                                <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes contactées sur la liste de contact">
+                                    <span class="h2 d-block mb-0 {% if eventInfo.totalContactees < eventInfo.totalGuests %}text-danger{% else %}text-dark{% endif %}">
+                                        {{ eventInfo.totalContactees }}
+                                        <span class="small text-gray"> / {{ eventInfo.totalGuests }}</span>
+                                    </span>
+                                        <span class="badge {% if eventInfo.totalContactees < eventInfo.totalGuests %}bg-danger{% else %}bg-dark{% endif %}">
+                                        {% if eventInfo.totalContactees > 1 %}personnes contactées{% else %}personne contactée{% endif %}
+                                        </span>
+                                </div>
+                                {% if eventInfo.totalParticipated %}
+                                <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes présentes à l'événement">
+                                    <span class="h2 d-block text-dark mb-0">
+                                        {{ eventInfo.totalParticipated }}
+                                    </span>
+                                        <span class="badge bg-dark">
+                                            {% if eventInfo.totalParticipated > 1 %}participants{% else %}participant{% endif %}
+                                        </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if senderInfo %}
+                <div class="card mb-2">
+                    <div class="card-body border-left border-primary">
+                        <div class="row">
+                            <div class="col-12 col-lg-3">
+                                <h3 class="h4 fw-normal my-2">Chiffres clés</h3>
+                            </div>
+                            <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes inscrites à l'événement">
+                                <span class="h2 d-block text-primary mb-0">
+                                    {{ senderInfo.totalTickets }}
+                                    {%- if sender.allocatedTickets -%}
+                                        <span class="small text-gray"> / {{ sender.allocatedTickets }}</span>
+                                    {% endif %}
+                                </span>
+                                <span class="badge bg-primary">
+                                    {% if senderInfo.totalTickets > 1 %}
+                                        inscrits
+                                        {%- if sender.allocatedTickets %} ({{ senderInfo.percentTickets }}%){% endif -%}
+                                    {% else %}inscrit{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes qui ont répondu (accepté ou refusé)">
+                                <span class="h2 d-block text-primary mb-0">
+                                    {{ senderInfo.totalReplies }}
+                                    <span class="small text-gray"> / {{ senderInfo.totalGuests }}</span>
+                                </span>
+                                <span class="badge bg-primary">
+                                    {% if senderInfo.totalReplies > 1 %}réponses ({{ senderInfo.percentReplies }}%){% else %}réponse{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes contactées sur la liste de contact">
+                                <span class="h2 d-block mb-0 {% if senderInfo.totalContactees < senderInfo.totalGuests %}text-danger{% else %}text-primary{% endif %}">
+                                    {{ senderInfo.totalContactees }}
+                                    <span class="small text-gray"> / {{ senderInfo.totalGuests }}</span>
+                                </span>
+                                <span class="badge {% if senderInfo.totalContactees < senderInfo.totalGuests %}bg-danger{% else %}bg-primary{% endif %}">
+                                    {% if senderInfo.totalContactees > 1 %}personnes contactées{% else %}personne contactée{% endif %}
+                                </span>
+                            </div>
+                            {% if senderInfo.totalParticipated %}
+                                <div class="col-lg-2 my-2 text-center" data-bs-tooltip="true" title="Nombre de personnes présentes à l'événement">
+                                    <span class="h2 d-block text-primary mb-0">
+                                        {{ senderInfo.totalParticipated }}
+                                    </span>
+                                    <span class="badge bg-primary">
+                                            {% if senderInfo.totalParticipated > 1 %}participants{% else %}participant{% endif %}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-12 col-md-6 pe-lg-1">
+                <div class="card mb-2">
+                    <div class="card-header h5 fw-normal">
+                        <i class="fas fa-calendar-alt fa-sm me-1"></i>
+                        Envois programmés
+                    </div>
+                    {% if emailNextSchedules|length == 0 %}
+                        <div class="card-body">
+                            <p class="text-muted small mb-0">Aucun envoi programmé.</p>
+                        </div>
+                    {% else %}
+                        <ul class="list-group list-group-flush">
+                            {% for schedule in emailNextSchedules %}
+                                <li class="list-group-item">
+                                    {% if schedule.processedAt %}
+                                        <span class="badge bg-success me-1">
+                                            #{{ schedule.id }} <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning me-1">#{{ schedule.id }}</span>
+                                        <i class="fas fa-clock"></i>
+                                    {% endif %}
+                                    {{ schedule.displayType|capitalize -}}
+                                    <small class="d-block text-muted">
+                                        {{ schedule.sendAt|format_date(pattern="eeee dd MMMM y @ H:mm", locale="fr") -}}
+                                        {% if schedule.template -%}
+                                            ,<br/>modèle&nbsp; : #{{ schedule.template.id }} {{ schedule.template.subject }}
+                                        {%- endif %}
+                                    </small>
+                                    {% if schedule.sender == event.currSender(app.user) %}
+                                        <span class="badge bg-success">moi uniquement</span>
+                                    {% elseif schedule.sender %}
+                                        <span class="badge bg-warning">{{ schedule.sender.displayName }} uniquement</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">global</span>
+                                    {% endif %}
+                                    {% if schedule.onlyNew %}<span class="badge bg-primary">nouveaux</span>{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <div class="card mb-2">
+                    <div class="card-header h5 fw-normal">
+                        <i class="fas fa-calendar-check fa-sm me-1"></i>
+                        Envois terminés
+                    </div>
+                    {% if emailPrevSchedules|length == 0 %}
+                        <div class="card-body">
+                            <p class="text-muted small mb-0">Aucun envoi terminé.</p>
+                        </div>
+                    {% else %}
+                        <ul class="list-group list-group-flush">
+                            {% for schedule in emailPrevSchedules %}
+                                <li class="list-group-item">
+                                    {% if schedule.processedAt %}
+                                        <span class="badge bg-success me-1">
+                                            #{{ schedule.id }} <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning me-1">
+                                            #{{ schedule.id }} <i class="fas fa-clock"></i>
+                                        </span>
+                                    {% endif %}
+                                    {{ schedule.displayType|capitalize -}}
+                                    <small class="d-block text-muted">
+                                        {{ schedule.sendAt|format_date(pattern="eeee dd MMMM y @ H:mm", locale="fr") -}}
+                                        {% if schedule.template -%}
+                                            ,<br/>modèle&nbsp; : #{{ schedule.template.id }} {{ schedule.template.subject }}
+                                        {%- endif %}
+                                    </small>
+                                    {% if schedule.sender == event.currSender(app.user) %}
+                                        <span class="badge bg-success">moi uniquement</span>
+                                    {% elseif schedule.sender %}
+                                        <span class="badge bg-warning">{{ schedule.sender.displayName }} uniquement</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">global</span>
+                                    {% endif %}
+                                    {% if schedule.onlyNew %}<span class="badge bg-primary">nouveaux</span>{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6 ps-lg-1">
+                <div class="card mb-2">
+                    <div class="card-header h5 fw-normal">
+                        <i class="fas fa-info-circle fa-sm me-1"></i> Informations sur l'événement
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            {% if event.finishAt is not null %}
+                                <span class="fw-bold">Date de début</span>
+                            {% else %}
+                                <span class="fw-bold">Date</span>
+                            {% endif %}
+                            <span>{{ event.beginAt|format_date(pattern="eee dd MMMM y @ H:mm", locale="fr") }}</span>
+                        </div>
+                        {% if event.finishAt is not null %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Date de fin</span>
+                                <span>{{ event.finishAt|format_date(pattern="eee dd MMMM y @ H:mm", locale="fr") }}</span>
+                            </div>
+                        {% endif %}
+                        {% if event.parent %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Date permutable</span>
+                                <span>{{ event.switchable ? 'Oui' : 'Non' }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Type d'événement</span>
+                            <span>{{ event.displayType }}</span>
+                        </div>
+                        {% if eventHelper.currentSender %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Type d'invités</span>
+                            <span>{{ eventHelper.currentSender.displayGuestType }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Propriétaire</span>
+                            <span>{{ event.owner.displayName }}</span>
+                        </div>
+                        {% if is_granted('MANAGE', event) and not eventHelper.currentSender %}
+                            <div class="list-group-item small">
+                                <a href="{{ path('event.delete', {id: event.id}) }}" class="text-danger">
+                                    <i class="fas fa-trash-alt me-2"></i>Supprimer
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-2">
+                    <div class="card-header h5 fw-normal">
+                        <i class="fas fa-file-excel fa-sm me-1"></i> Exports
+                    </div>
+                    <div class="list-group list-group-flush d-flex justify-content-around">
+                        {% if eventHelper.currentSender %}
+                            <a href="{{ path('sender_export', {id: eventHelper.currentSender.id}) }}" class="list-group-item -underline d-flex justify-content-between align-items-center">
+                                <span>Exporter mes invités</span>
+                                <span class="fas fa-download"></span>
+                            </a>
+                        {% else %}
+                            <a href="{{ path('event_export', {id: event.id}) }}" class="list-group-item -underline d-flex justify-content-between align-items-center">
+                                <span>Exporter tous les invités</span>
+                                <span class="fas fa-download"></span>
+                            </a>
+                        {% endif %}
+
+                        {% if eventHelper.event.type == 'ateliers' and not eventHelper.currentSender %}
+                            {% for workshop in workshops %}
+                                <div class="dropdown list-group-flush">
+                                <button id="dropdownAtelier-{{ workshop.id }}-label" type="button" class="list-group-item -underline d-flex justify-content-between align-items-center dropdown-toggle w-100" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="flex-shrink-1 flex-grow-0" style="text-overflow: ellipsis; overflow: hidden;">{{ workshop.name }}</span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end text-end" aria-labelledby="dropdownAtelier-{{ workshop.id }}-label" id="dropdownAtelier-{{ workshop.id }}">
+                                    <a href="{{ path('workshop_export', {id: workshop.id}) }}" class="dropdown-item">Tous les créneaux  <span class="ms-2 fas fa-download"></span></a>
+                                    {% for timeslot in workshop.timeslots %}
+                                        <a href="{{ path('workshop_export', {id: workshop.id, timeslotId: timeslot.timeslot.id}) }}" class="dropdown-item">Créneau de {{ timeslot.timeslot.startAt|format_datetime('none', 'short', locale='fr', timezone='UTC') }} <span class="ms-2 fas fa-download"></span></a>
+                                    {% endfor %}
+                                </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

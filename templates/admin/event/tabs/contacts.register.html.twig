@@ -1,0 +1,220 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-check-circle me-2"></i>
+                {{ guest.displayName|default(guest.email) }}
+            </div>
+            <a href="{{ path('app_event_contacts', {id: eventHelper.event.id}) }}" class="btn-close">
+                <span class="sr-only">Retour aux contacts</span>
+            </a>
+        </div>
+        <div class="card-body">
+            {{ form_row(form.gender) }}
+
+            <div class="row">
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.email) }}
+                </div>
+                {% if form.phone is defined %}
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.phone) }}
+                </div>
+                {% endif %}
+                {% if form.company is defined %}
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.company) }}
+                    </div>
+                {% endif %}
+                {% if form.siret is defined %}
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.siret) }}
+                    </div>
+                {% endif %}
+                {% if form.inspecteurCommercial is defined %}
+                <div class="col-12 col-md-6">
+                    {{ form_row(form.inspecteurCommercial) }}
+                </div>
+                {% endif %}
+            </div>
+            {% if form.golf is defined %}
+                {{ form_row(form.golf) }}
+                <div class="row" id="golf">
+                    <div class="col-12 col-md-6 golf-licence">
+                        {{ form_row(form.golfLicense) }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.golfIndex) }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if form.workshops is defined %}
+                {{ form_row(form.workshops) }}
+            {% endif %}
+
+            {% if form.prospects is defined -%}
+                <div class="my-5">
+                    <h3 class="display-4 separator-top text-dark mb-3">
+                        {{ form.prospects.vars.label }}
+
+                    </h3>
+                    <div class="repeater" data-prototype="{{ _macro.prospect_form(form.prospects.vars.prototype, 'Invité #__name__')|e('html_attr') }}">
+                        {% for key, prospect in form.prospects %}
+                            {{ _macro.prospect_form(prospect, 'Invité #'~(key+1)) }}
+                        {% endfor %}
+                    </div>
+                    {% do form.prospects.setRendered %}
+                </div>
+            {% endif %}
+
+            {% if form.sidekicks is defined -%}
+                <div class="my-5">
+                    <h3 class="display-4 separator-top text-dark mb-3">
+                        {{ form.sidekicks.vars.label }}
+                    </h3>
+                    <div class="repeater" data-prototype="{{ _macro.sidekick_form(form.sidekicks.vars.prototype, 'Accompagnant #__name__')|e('html_attr') }}">
+                        {% for key, prospect in form.sidekicks %}
+                            {{ _macro.sidekick_form(prospect, 'Invité #'~(key+1)) }}
+                        {% endfor %}
+                    </div>
+                    {% do form.sidekicks.setRendered %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('form-repeater') }}
+    {{ encore_entry_script_tags('cleave') }}
+    <script>
+
+      // Format phone number
+      var cleave = new Cleave('#guest_phone', {
+        phone: true,
+        phoneRegionCode: 'fr',
+      });
+
+      if ($('.golf-licence').length) {
+        // Format licence golf
+        var golfCleave = new Cleave('#guest_golfLicense', {
+          numericOnly: true,
+          delimiter: ' ',
+          blocks: [3, 3, 3]
+        });
+      }
+      // Format SIRET
+      var $siret = $('input.siret');
+      if ($siret.length && !$siret.hasClass('icx')) {
+
+        var siretCleave = new Cleave($siret, {
+          blocks: [3, 3, 3, 5],
+        });
+
+        $siret.on('change keypress keyup blur', function (e) {
+
+          var $this = $(this),
+            val = $this.val().replace(/[^0-9 ]/g, '');
+
+          $this.val(val);
+        });
+      }
+
+      $('.repeater').each(function () {
+        var manager = new RepeaterManager();
+        manager.init($(this));
+      }).on('added.repeater prepared.row.repeater', function (e, el) {
+        bootstrap.Tooltip.getOrCreateInstance(el.find('[data-bs-tooltip="true"]'));
+      }).on('delete.repeater', function (e, el) {
+        bootstrap.Tooltip.getOrCreateInstance(el.find('[data-bs-tooltip="true"]')).dispose();
+      });
+
+      // Golf
+      $('input[name="guest[golf]"]').on('change', function () {
+
+        var $this = $('input[name="guest[golf]"]:checked'),
+          $golfRow = $('#golf'),
+          val = $this.val();
+
+        if (val === '1') {
+
+          if (!$golfRow.is(':visible')) $golfRow.slideDown(200);
+
+        } else {
+
+          if ($golfRow.is(':visible')) $golfRow.slideUp(200);
+        }
+      }).trigger('change');
+
+    </script>
+{% endblock %}
+
+{% macro prospect_form(form, name) %}
+
+    <div class="repeater-child card shadow mb-2">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            {{ name }}
+            <button type="button" class="btn btn-sm btn-danger" data-bs-tooltip="true" title="Retirer l'invité"
+                    data-delete-row="true">
+                <i class="fas fa-user-slash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+
+            {{ form_row(form.gender) }}
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="col-12{% if form.company is defined %} col-lg-6{% endif %}">
+                    {{ form_row(form.email) }}
+                </div>
+                {% if form.company is defined %}
+                    <div class="col-12 col-lg-6">
+                        {{ form_row(form.company) }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endmacro %}
+
+{% macro sidekick_form(form, name) %}
+
+    <div class="repeater-child card shadow mb-2">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            {{ name }}
+            <button type="button" class="btn btn-sm btn-danger" data-bs-tooltip="true" title="Retirer l'invité"
+                    data-delete-row="true">
+                <i class="fas fa-user-slash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="col-12 col-lg-6">
+                    {{ form_row(form.firstName) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endmacro %}

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de fichiers</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .file-manager-container {
+            padding: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .file-manager-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+        
+        .file-manager-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .dropzone {
+            border: 2px dashed #0284c7;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            background-color: #fefefe;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+        
+        .dropzone:hover,
+        .dropzone.dragover {
+            background-color: #f0f9ff;
+            border-color: #0369a1;
+        }
+        
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+        
+        .upload-icon-outer {
+            width: 64px;
+            height: 64px;
+            background-color: #e0f2fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-icon-inner {
+            width: 48px;
+            height: 48px;
+            background-color: #0369a1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: white;
+            stroke-width: 2;
+        }
+        
+        .dropzone-text {
+            color: #6b7280;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .browse-link {
+            color: #0284c7;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        
+        .browse-link:hover {
+            color: #0369a1;
+        }
+        
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .file-info-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .continue-btn {
+            display: none;
+        }
+        
+        .progress-container {
+            display: none;
+            margin-bottom: 24px;
+        }
+        
+        .progress-bar-container {
+            height: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, #0369a1, #0284c7);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        
+        #fileInput {
+            display: none !important;
+        }
+        
+        .file-list-section {
+            margin-top: 32px;
+        }
+        
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .file-list-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .back-btn {
+            display: none;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .file-item:hover {
+            background: #f0f9ff;
+            border-color: #0284c7;
+        }
+        
+        .file-preview {
+            width: 48px;
+            height: 48px;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .file-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .file-icon-container {
+            width: 48px;
+            height: 48px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .file-icon {
+            font-size: 20px;
+            color: #6b7280;
+        }
+        
+        .file-info-section {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .file-meta {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .select-btn {
+            padding: 6px 12px;
+            background: linear-gradient(to right, #0369a1, #0284c7);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        
+        .select-btn:hover {
+            background: linear-gradient(to right, #075985, #0369a1);
+        }
+        
+        .delete-btn {
+            padding: 6px 12px;
+            background: white;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #fef2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="file-manager-container">
+        <!-- Upload Section -->
+        <div id="uploadSection">
+            <p class="file-manager-subtitle">Ajoutez vos fichiers ou documents ici</p>
+            
+            <div id="dropzone" class="dropzone">
+                <div class="upload-icon">
+                    <div class="upload-icon-outer">
+                        <div class="upload-icon-inner">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="white"/>
+                                <polyline points="17 8 12 3 7 8" stroke="white"/>
+                                <line x1="12" y1="3" x2="12" y2="15" stroke="white"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <p class="dropzone-text">
+                    Déposez vos fichiers ici, <a href="#" id="browseFiles" class="browse-link">ou cliquez pour parcourir</a>
+                </p>
+                <input type="file" id="fileInput" multiple accept=".docx,.png,.webp,.csv,.txt,.zip,.pdf,.doc,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.jpg,.jpeg,.gif">
+            </div>
+            
+            <div class="file-info">
+                <div class="file-info-left">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Fichiers supportés : .docx, .png, .webp, .csv, .txt, .zip</span>
+                </div>
+                <span>Taille maximale : 10MB</span>
+            </div>
+            
+            <div id="progressContainer" class="progress-container">
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-bar-fill"></div>
+                </div>
+            </div>
+            
+            <!-- File List Section -->
+            <div id="fileListSection" class="file-list-section">
+                <div class="file-list-header">
+                    <h2 class="file-list-title">Fichiers existants</h2>
+                </div>
+            
+            <div id="fileList">
+                {% for file in files %}
+                <div class="file-item" data-filename="{{ file.name }}">
+                    <div class="file-preview">
+                        {% if file.isImage %}
+                            <img src="{{ file.url }}" alt="{{ file.name }}">
+                        {% else %}
+                            <div class="file-icon-container">
+                                <i class="fas fa-file-{{ file.extension == 'pdf' ? 'pdf' : (file.extension in ['doc', 'docx'] ? 'word' : (file.extension in ['xls', 'xlsx'] ? 'excel' : 'alt')) }} file-icon"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="file-info-section">
+                        <div class="file-name">{{ file.name }}</div>
+                        <div class="file-meta">{{ file.size }} - {{ file.modifiedAt|date('d/m/Y H:i') }}</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="select-btn" data-url="{{ file.url }}" data-name="{{ file.name }}">
+                            <i class="fas fa-check"></i> Sélectionner
+                        </button>
+                        <button class="delete-btn" data-filename="{{ file.name }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const browseFiles = document.getElementById('browseFiles');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const continueBtn = document.getElementById('continueBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const fileListSection = document.getElementById('fileListSection');
+        const backBtn = document.getElementById('backBtn');
+        const fileList = document.getElementById('fileList');
+        
+        // Browse files
+        browseFiles.addEventListener('click', function(e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+        
+        // Entire dropzone is clickable
+        dropzone.addEventListener('click', function(e) {
+            if (e.target === browseFiles || browseFiles.contains(e.target)) return;
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        // Drag and drop
+        dropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        // Files are always visible now
+        
+        // Handle file upload
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files[]', file);
+            }
+            
+            // Show progress
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                }
+            }, 50);
+            
+            // Upload files
+            fetch('{{ uploadUrl }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                if (data.success) {
+                    // Add files to list
+                    data.files.forEach(file => {
+                        addFileToList(file);
+                    });
+                    
+                    // Reset
+                    fileInput.value = '';
+                    
+                    // Hide progress
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                    }, 1000);
+                }
+                
+                if (data.errors && data.errors.length > 0) {
+                    alert('Erreurs:\n' + data.errors.map(e => e.file + ': ' + e.error).join('\n'));
+                }
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+                alert('Erreur: ' + error.message);
+            });
+        }
+        
+        // Add file to list
+        function addFileToList(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.filename = file.name;
+            
+            let preview;
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.extension)) {
+                preview = `<img src="${file.url}" alt="${file.name}">`;
+            } else {
+                let icon = 'fa-file-alt';
+                if (file.extension === 'pdf') icon = 'fa-file-pdf';
+                else if (['doc', 'docx'].includes(file.extension)) icon = 'fa-file-word';
+                else if (['xls', 'xlsx'].includes(file.extension)) icon = 'fa-file-excel';
+                
+                preview = `<div class="file-icon-container">
+                    <i class="fas ${icon} file-icon"></i>
+                </div>`;
+            }
+            
+            fileItem.innerHTML = `
+                <div class="file-preview">${preview}</div>
+                <div class="file-info-section">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">${file.size || ''} - ${file.uploadedAt || new Date().toLocaleString('fr-FR')}</div>
+                </div>
+                <div class="file-actions">
+                    <button class="select-btn" data-url="${file.url}" data-name="${file.name}">
+                        <i class="fas fa-check"></i> Sélectionner
+                    </button>
+                    <button class="delete-btn" data-filename="${file.name}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            fileList.insertBefore(fileItem, fileList.firstChild);
+            attachFileEvents(fileItem);
+        }
+        
+        // Attach events to file items
+        function attachFileEvents(item) {
+            // Select file
+            item.querySelector('.select-btn').addEventListener('click', function() {
+                const url = this.dataset.url;
+                
+                // Send to parent (TinyMCE)
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        mceAction: 'fileSelected',
+                        data: { url: window.location.origin + url }
+                    }, '*');
+                }
+            });
+            
+            // Delete file
+            item.querySelector('.delete-btn').addEventListener('click', function() {
+                if (!confirm('Supprimer ce fichier ?')) return;
+                
+                const filename = this.dataset.filename;
+                const deleteUrl = '{{ uploadUrl|replace({'upload': 'delete'}) }}';
+                
+                fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'filename=' + encodeURIComponent(filename)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        item.remove();
+                    } else {
+                        alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+                    }
+                })
+                .catch(error => {
+                    alert('Erreur: ' + error.message);
+                });
+            });
+        }
+        
+        // Attach events to existing files
+        document.querySelectorAll('.file-item').forEach(item => {
+            attachFileEvents(item);
+        });
+    });
+    </script>
+</body>
+</html>

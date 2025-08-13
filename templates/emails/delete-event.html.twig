@@ -1,0 +1,19 @@
+<div class="container">
+
+    <p>Bonjour,</p>
+
+    {% if days == 0 %}
+
+        <p>Votre événement: {{ event.name }} vient d'être archivé et les listes de contacts ont été vidées.</p>
+        <p>Vous pouvez retrouver les informations et statistiques de votre événement dans les archives.</p>
+
+    {% else %}
+
+        <p>Votre événement: {{ event.name}} sera archivé dans {{ days }} jours.</p>
+
+    {% endif %}
+
+    <p>Cordialement,</p>
+    <p>L'équipe de Gan.events</p>
+
+</div>

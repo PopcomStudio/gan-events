@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<form method="post" class="container">
+    <div class="row justify-content-center">
+
+        <div class="col-xl-10 col-lg-12 col-md-9 my-5">
+
+            <div class="mb-3">
+                <div class="container d-flex justify-content-between">
+                    <img src="{{ asset('assets/images/logo-gan.png') }}" alt="Gan Assurances" class="img-fluid" />
+                </div>
+            </div>
+
+            <div class="card overflow-hidden border-0 shadow-lg">
+                <div class="card-body p-0">
+                    <!-- Nested Row within Card Body -->
+                    <div class="row">
+                        <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                        <div class="col-lg-6">
+                            <div class="p-5">
+                                {{ form_start(form) }}
+
+                                <h1 class="display-4 separator mb-4">
+                                    Merci de vous identifier
+                                </h1>
+
+                                {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+
+                                {{ form_widget(form) }}
+
+                                {# Affichage des ateliers si présents #}
+                                {% if form.workshops is defined %}
+                                    <div class="mb-4">
+                                        <h2 class="h5 fw-bold text-dark mb-2">Ateliers</h2>
+                                        {{ form_row(form.workshops) }}
+                                    </div>
+                                {% endif %}
+
+                                <button class="btn btn-secondary w-100" type="submit">
+                                    Accéder à l'événement
+                                </button>
+                                {{ form_end(form) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</form>
+
+<footer class="text-white text-center small py-3" style="position:absolute;bottom:0;left:0;width:100%">
+    Copyright © {{ "now"|date('Y')}} Gan Assurances, tous droits réservés
+    {% for title, content in legal %}
+        -
+        {% include '_partial/modal.html.twig' with {title, content, dark: true} only %}
+    {% endfor %}
+</footer>
+{% endblock %}

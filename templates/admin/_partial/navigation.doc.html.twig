@@ -1,0 +1,5 @@
+<a href="{% if is_granted('ROLE_ADMIN') %}{{ asset('uploads/documentation.pdf') }}{% else %}{{ asset('uploads/guide-utilisateur.pdf') }}{% endif %}" class="nav-link text-inherit" target="_blank">
+    <i class="fas fa-question-circle fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+    Consulter la doc.
+</a>
+<hr class="nav-divider">

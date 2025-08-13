@@ -1,0 +1,14 @@
+{
+    "opensans": {
+        "normal": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-Regular",
+        "bold": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-SemiBold",
+        "italic": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-Italic",
+        "bold_italic": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-SemiBoldItalic"
+    },
+    "opensansextra": {
+        "normal": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-Bold",
+        "bold": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-ExtraBold",
+        "italic": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-Bold",
+        "bold_italic": "\/var\/www\/vhosts\/gan.events\/httpdocs\/assets\/fonts-pdf\/\/OpenSans-Bold"
+    }
+}

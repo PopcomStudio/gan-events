@@ -1,0 +1,11 @@
+{% extends 'security/base.html.twig' %}
+
+{% block form_title %}Confirmation{% endblock %}
+
+{% block form_body %}
+    {{ form_start(form) }}
+    <p>Merci de confirmer votre désinscription à l'événement <strong>{{ event.name }}</strong>.</p>
+    <a href="{{ path('public_event_show', {slug: event.slug}) }}" class="btn btn-light">S'inscrire</a>
+    {{ form_widget(form.confirm) }}
+    {{ form_end(form) }}
+{% endblock %}

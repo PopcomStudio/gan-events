@@ -1,0 +1,155 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-paper-plane me-2"></i>
+                Planification des envois
+            </div>
+            <a href="{{ path('schedule_new', {id: eventHelper.event.id}) }}" data-toggle="load-modal"
+               class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                <span class="d-none d-md-inline">Ajouter</span>
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <p class="mb-0" role="button" data-bs-toggle="collapse" data-bs-target="#more-infos" aria-expanded="false" aria-controls="more-infos">
+                    <i class="fas fa-question-circle me-2"></i>
+                    En savoir plus sur les types d'email
+                </p>
+                <ul class="collapse small mt-2" id="more-infos">
+                    <li><b>Invitation</b> : à destination des contacts n'ayant pas encore reçus d'invitation.</li>
+                    <li><b>Relance</b> : à destination des contacts ayant déjà reçu une invitation mais n'ayant pas répondus.</li>
+                    <li><b>Rappel</b> : à destination des contacts inscrits pour rappeler les informations de l'événement.</li>
+                    <li><b>Remerciement</b> : à destination des contacts marqués comme ayant participé à l'événement / scannés lors de l'événement.</li>
+                    <li><b>Informations générales</b> : à destination de tous les contacts de cet événement.</li>
+                </ul>
+            </div>
+        {% for schedule in schedules %}
+            {% if loop.first %}
+            <table id="table-schedules" class="table table-striped w-100">
+                <thead>
+                <tr class="bg-dark text-white">
+                    <th class="no-sort"></th>
+                    <th class="no-sort small fw-bold">#</th>
+                    <th class="no-sort small fw-bold">Sujet</th>
+                    <th class="no-sort small fw-bold">Email</th>
+                    <th class="small fw-bold text-nowrap">Date d'envoi</th>
+                    <th class="no-sort text-center small fw-bold text-nowrap">Contacts de</th>
+                    <th class="no-sort text-center small fw-bold">Modèle</th>
+                    <th class="no-sort text-center small fw-bold">Nouveaux uniquement</th>
+                    <th class="no-sort text-center small fw-bold text-nowrap">Email test</th>
+                    <th class="no-sort"></th>
+                </tr>
+                </thead>
+                <tbody>
+            {% endif %}
+{#                {% for schedule in schedules %}#}
+                    <tr>
+                        <td class="text-center align-middle">
+                            {% if schedule.processedAt %}
+                                <i class="fas fa-check-circle fa-fw text-success"></i>
+                            {% else %}
+                                <i class="fas fa-clock fa-fw"></i>
+                            {% endif %}
+                        </td>
+                        <td class="small align-middle">
+                            #{{ schedule.id }}
+                        </td>
+                        <td class="small align-middle">
+                            {{ schedule.subject }}
+                        </td>
+                        <td class="small align-middle">
+                            {{ schedule.displayType|capitalize }}
+                        </td>
+                        <td class="small align-middle text-nowrap" data-order="{{ schedule.sendAt|date('YmdHis') }}">
+                            {{ schedule.sendAt|format_date(pattern="eeee dd MMMM y @ H:mm", locale="fr") -}}
+                        </td>
+                        <td class="small align-middle text-center">
+                            {% if eventHelper.currentSender and schedule.sender == eventHelper.currentSender() %}
+                                Mes contacts <span class="fw-bold">#{{ schedule.sender.id }}</span>
+                            {% elseif schedule.sender %}
+                                {{ schedule.sender.displayName }} <span class="fw-bold">#{{ schedule.sender.id }}</span>
+                            {% else %}
+                                Tous les expéditeurs
+                            {% endif %}
+                        </td>
+                        <td class="small align-middle text-center">
+                            {% if schedule.template -%}
+                                #{{ schedule.template.id }}
+                            {% endif %}
+                        </td>
+                        <td class="small text-center align-middle">
+                            {% if schedule.onlyNew %}Oui{% else %}Non{% endif %}
+                        </td>
+                        <td class="text-center align-middle">
+                            <a href="{{ path('send', {id: schedule.id, type: 'schedule'}) }}"
+                               class="btn btn-primary btn-circle btn-sm" data-toggle="load-modal">
+                                <i class="fas fa-paper-plane"></i>
+                            </a>
+                        </td>
+                        <td class="text-center align-middle">
+                            {% if not schedule.processedAt %}
+                                <a href="{{ path('schedule_edit', {id: schedule.id}) }}" data-toggle="load-modal">
+                                    <span class="fas fa-edit"></span>
+                                    <span class="sr-only">Editer</span>
+                                </a>
+                            {% else %}
+                                <span class="fas fa-edit text-muted"></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+            {% if loop.last %}
+                </tbody>
+            </table>
+            {% endif %}
+        {% else %}
+            Aucun email programmé.
+        {% endfor %}
+        </div>
+        <div class="card-footer text-end">
+            <a href="{{ path('schedule_new', {id: eventHelper.event.id}) }}" data-toggle="load-modal"
+               class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i> Ajouter
+            </a>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+      var filemanager_url = "{{ path('filemanager_browse', {type: eventHelper.currentSender ? 'sender' : 'event', id: eventHelper.currentSender ? eventHelper.currentSender.id : eventHelper.event.id}) }}"
+    </script>
+    {{ encore_entry_script_tags('datatables') }}
+    {{ encore_entry_script_tags('tinymce') }}
+    {{ encore_entry_script_tags('datepicker') }}
+    {{ encore_entry_script_tags('select2') }}
+    <script>
+      $('#table-schedules').DataTable({
+          searching: false,
+          order: [[4, "desc"]],
+          columnDefs: [
+            {targets: 'no-sort', orderable: false}
+          ],
+          pageLength: 10,
+        })
+
+      // Fix TinyMCE 5 x Bootstrap 5 modal
+      document.addEventListener('focusin', (e) => {
+        if (e.target.closest(".tox-tinymce-aux, .moxman-window, .tam-assetmanager-root") !== null) {
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+    {{ encore_entry_link_tags('datepicker') }}
+{% endblock %}

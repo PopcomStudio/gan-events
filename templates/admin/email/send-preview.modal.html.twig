@@ -1,0 +1,35 @@
+{% if form is defined %}
+    {{ form_start(form, {attr: {class: 'modal-content'}}) }}
+    <div class="modal-header bg-primary">
+        <h5 class="modal-title text-white" id="modalLabel">
+            Email test
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+    </div>
+    <div class="modal-body">
+        {{ form_errors(form) }}
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+            {{ form_widget(form) }}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-primary btn-sm">Envoyer</button>
+    </div>
+    {{ form_end(form) }}
+{% else %}
+    <div class="modal-content">
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+        </div>
+        <script>
+            var url = window.location.href;
+            var hash = window.location.hash;
+            var index_of_hash = url.indexOf(hash) || url.length;
+            url = url.substr(0, index_of_hash);
+            window.location.href = url+'#{{ type }}';
+            document.location.reload();
+        </script>
+    </div>
+{% endif %}

@@ -1,0 +1,154 @@
+.file-manager-modal .modal-content {
+    border-radius: 16px;
+    border: none;
+}
+
+.file-manager-modal .modal-header {
+    border-bottom: none;
+    padding: 24px 24px 0 24px;
+}
+
+.file-manager-modal .modal-body {
+    padding: 24px;
+}
+
+.file-manager-modal .modal-title {
+    color: #1f2937;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.file-manager-dropzone {
+    border: 2px dashed #d946ef !important;
+    border-radius: 12px !important;
+    padding: 48px 24px !important;
+    background-color: #fefefe !important;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.file-manager-dropzone:hover,
+.file-manager-dropzone.dragover {
+    background-color: #f9fafb !important;
+    border-color: #a855f7 !important;
+}
+
+.file-manager-icon {
+    width: 64px;
+    height: 64px;
+    background-color: #f3f4f6;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.file-manager-icon-inner {
+    width: 48px;
+    height: 48px;
+    background-color: #1f2937;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-manager-text {
+    color: #6b7280 !important;
+    font-size: 16px !important;
+    margin-bottom: 0;
+}
+
+.file-manager-link {
+    color: #d946ef !important;
+    text-decoration: underline !important;
+    font-weight: 500 !important;
+}
+
+.file-manager-info {
+    color: #6b7280 !important;
+    font-size: 14px !important;
+}
+
+.file-manager-continue {
+    background: linear-gradient(to right, #d946ef, #9333ea) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 12px 24px !important;
+    width: 100%;
+}
+
+.file-manager-continue:hover {
+    background: linear-gradient(to right, #c026d3, #7c3aed) !important;
+    color: white !important;
+}
+
+.file-manager-select {
+    background: linear-gradient(to right, #d946ef, #9333ea) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+}
+
+.file-manager-select:hover {
+    background: linear-gradient(to right, #c026d3, #7c3aed) !important;
+    color: white !important;
+}
+
+.file-manager-delete {
+    border-radius: 8px !important;
+    font-size: 14px !important;
+}
+
+.file-preview-img {
+    width: 48px !important;
+    height: 48px !important;
+    object-fit: cover !important;
+    border-radius: 6px !important;
+}
+
+.file-preview-icon {
+    width: 48px !important;
+    height: 48px !important;
+    background-color: #f3f4f6 !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.progress-custom {
+    height: 8px !important;
+    border-radius: 4px !important;
+    background-color: #f3f4f6 !important;
+}
+
+.progress-bar-custom {
+    background: linear-gradient(to right, #d946ef, #9333ea) !important;
+    border-radius: 4px !important;
+}
+
+// Force hide the file input
+#fileInput {
+    display: none !important;
+}
+
+// Hide file list section by default
+#fileListSection {
+    display: none !important;
+}
+
+#fileListSection.d-none {
+    display: none !important;
+}
+
+#uploadSection.d-none {
+    display: none !important;
+}

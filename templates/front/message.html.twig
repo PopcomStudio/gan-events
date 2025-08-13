@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <form method="post" class="container">
+        <div class="row justify-content-center">
+
+            <div class="col-xl-10 col-lg-12 col-md-9 my-5">
+
+                <div class="mb-3">
+                    <div class="container d-flex justify-content-between">
+                        <img src="{{ asset('assets/images/logo-gan.png') }}" alt="Gan Assurances" class="img-fluid" />
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden border-0 shadow-lg">
+                    <div class="card-body p-0">
+                        <!-- Nested Row within Card Body -->
+                        <div class="row no-gutters">
+                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <h1 class="display-4 separator mb-4">
+                                        {{ pageTitle|default('Merci pour votre réponse')|raw }}
+                                    </h1>
+
+                                    {{ message }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+{% endblock %}

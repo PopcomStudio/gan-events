@@ -1,0 +1,74 @@
+/* Options */
+
+$enable-rounded: false;
+$enable-negative-margins: true;
+
+/* Colors */
+
+$min-contrast-ratio: 3;
+
+$primary: #249ad2;
+$secondary: #ffd631;
+$success: #198754;
+$info: #0dcaf0;
+$warning: #ffc107;
+$danger: #dc3545;
+$light: #e6e7e8;
+$dark: #001b4c;
+$inherit: #231f20;
+
+$theme-colors: (
+  "primary":    $primary,
+  "secondary":  $secondary,
+  "success":    $success,
+  "info":       $info,
+  "warning":    $warning,
+  "danger":     $danger,
+  "light":      $light,
+  "dark":       $dark,
+  "inherit":    $inherit,
+) !default;
+
+$gray-100: #f2f2f2;
+$gray-400: #989a9b;
+$gray-700: #5f5f5f;
+$gray-900: $inherit;
+
+$body-bg: $light;
+$body-color: $inherit;
+
+/* Forms */
+
+$input-bg: white;
+
+/* Font */
+
+$font-family-base: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+$font-weight-bold: 700;
+$headings-font-weight: 800;
+
+$small-font-size: .8em;
+
+/* Links */
+
+$link-decoration: none;
+
+/* Display */
+
+.display-1, .display-2, .display-3, .display-4, .display-5 {
+  font-family: "Open Sans", $font-family-base;
+}
+
+$display-font-weight: 800;
+$display-font-sizes: (
+  1: 4rem,
+  2: 3rem,
+  3: 2rem,
+  4: 1.5rem,
+);
+
+/* Buttons */
+
+$btn-font-weight: 600;
+

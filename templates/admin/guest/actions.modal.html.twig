@@ -1,0 +1,72 @@
+<div class="modal-content">
+
+    <div class="modal-header bg-primary">
+        <h5 class="modal-title text-white" id="modalLabel">
+            <span class="fas fa-user-circle fa-fw me-2"></span>{{ guest.displayName|default(guest.email) }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+    </div>
+
+    {% if guest.isRegistered %}
+    <div class="modal-body py-2 border-top">
+        <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_status', {id: guest.id, status: 'participated'}) }}">
+            <i class="fas fa-check-double fa-fw text-success me-2"></i>Marquer présent(e) / participant(e)
+        </a>
+        <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_status', {id: guest.id, status: 'pending'}) }}">
+            <i class="fas fa-undo-alt fa-fw text-danger me-2"></i>Annuler l'inscription de l'invité
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="modal-body py-2 border-top">
+        <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_register', {id: guest.id}) }}">
+            <i class="fas fa-check fa-fw text-success me-2"></i>
+            {%- if not guest.isRegistered %}Inscrire l'invité{% else %}Réinscrire l'invité{% endif %}
+        </a>
+        {% if eventHelper.event.switchable and eventHelper.event.parent.otherEvents(eventHelper.event).count %}
+            <a href="{{ path('guest_switch', {id: guest.id}) }}" class="d-block py-1 -underline text-inherit" data-toggle="load-modal">
+                <i class="fas fa-people-arrows fa-fw me-2"></i>Permuter sur un autre événement
+            </a>
+        {% endif %}
+        {% if guest.isDeclined %}
+            <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_status', {id: guest.id, status: 'pending'}) }}">
+                <i class="fas fa-undo-alt fa-fw text-danger me-2"></i>Annuler le refus de l'invité
+            </a>
+        {% endif %}
+        {% if not guest.isDeclined %}
+            <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_status', {id: guest.id, status: 'declined'}) }}">
+                <i class="fas fa-times fa-fw text-danger me-2"></i>Refuser pour l'invité
+            </a>
+        {% endif %}
+    </div>
+
+    {% if eventHelper.canManageEmail and not guest.isSidekick and not guest.isDeclined %}
+        <div class="modal-body py-2 border-top">
+            <a href="{{ path('guest_resend', {id: guest.id}) }}" class="d-block py-1 -underline text-inherit" data-toggle="load-modal">
+                <i class="fas fa-paper-plane fa-fw text-primary me-2"></i>Renvoyer un e-mail à l'invité
+            </a>
+        </div>
+    {% endif %}
+
+    {% if guest.status == 'guest' %}
+        <div class="modal-body py-2 border-top">
+            <a class="d-block py-1 -underline text-inherit" href="{{ path('guest_invitation', {id: guest.id}) }}" download>
+                <i class="fas fa-file-pdf fa-fw me-2"></i>Télécharger la carte d'invitation (.pdf)
+            </a>
+        </div>
+    {% endif %}
+
+    <div class="modal-body py-2 border-top">
+        <a href="{{ path('guest_edit', {id: guest.id}) }}" class="d-block py-1 -underline text-inherit" data-toggle="load-modal">
+            <i class="fas fa-edit fa-fw me-2"></i>Editer l'invité
+        </a>
+        <a href="{{ path('guest_delete', {id: guest.id}) }}" class="d-block py-1 -underline text-inherit">
+            <i class="fas fa-trash-alt fa-fw text-danger me-2"></i>Supprimer l'invité
+        </a>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+    </div>
+
+</div>

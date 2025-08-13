@@ -1,0 +1,113 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-envelope-open-text me-2"></i>
+                Gestion des modèles d'email
+            </div>
+            <a href="{{ path('email_new', {id: eventHelper.event.id}) }}" data-toggle="load-modal"
+               class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                <span class="d-none d-md-inline">Ajouter</span>
+            </a>
+        </div>
+        <div class="card-body">
+        {% for template in templates %}
+            {% if loop.first %}
+            <table id="table-templates" class="table table-striped w-100">
+                <thead>
+                <tr class="bg-dark text-white">
+                    <th class="no-sort small fw-bold">#</th>
+                    <th class="no-sort small fw-bold">Type</th>
+                    <th class="no-sort small fw-bold">Objet</th>
+                    <th class="no-sort text-center small fw-bold text-nowrap">Disponible pour</th>
+                    <th class="no-sort text-center small fw-bold text-nowrap">Email test</th>
+                    <th class="no-sort"></th>
+                </tr>
+                </thead>
+                <tbody>
+            {% endif %}
+            <tr>
+                <td class="small align-middle">
+                    <span class="fw-bold">#{{ template.id }}</span>
+                </td>
+                <td class="small align-middle">
+                    {{ template.displayType|capitalize }}
+                </td>
+                <td class="small align-middle">
+                    {{ template.subject }}
+                </td>
+                <td class="small align-middle text-center">
+                    {% if eventHelper.currentSender and template.sender == eventHelper.currentSender() %}
+                        Moi uniquement <span class="fw-bold">#{{ template.sender.id }}</span>
+                    {% elseif template.sender %}
+                        {{ template.sender.displayName }} <span class="fw-bold">#{{ template.sender.id }}</span>
+                    {% else %}
+                        Tous les expéditeurs
+                    {% endif %}
+                </td>
+                <td class="text-center align-middle">
+                    <a href="{{ path('send', {id: template.id, type: 'template'}) }}"
+                       class="btn btn-primary btn-circle btn-sm" data-toggle="load-modal">
+                        <i class="fas fa-paper-plane"></i>
+                    </a>
+                </td>
+                <td class="text-center align-middle">
+                    <a href="{{ path('email_edit', {id: template.id}) }}" data-toggle="load-modal">
+                        <span class="fas fa-edit"></span>
+                        <span class="sr-only">Editer</span>
+                    </a>
+                </td>
+            </tr>
+            {% if loop.last %}
+                </tbody>
+                </table>
+            {% endif %}
+        {% else %}
+            Aucun modèle créé.
+        {% endfor %}
+        </div>
+        <div class="card-footer text-end">
+            <a href="{{ path('schedule_new', {id: eventHelper.event.id}) }}" data-toggle="load-modal"
+               class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i> Ajouter
+            </a>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+      var filemanager_url = "{{ path('filemanager_browse', {type: eventHelper.currentSender ? 'sender' : 'event', id: eventHelper.currentSender ? eventHelper.currentSender.id : eventHelper.event.id}) }}"
+    </script>
+    {{ encore_entry_script_tags('datatables') }}
+    {{ encore_entry_script_tags('tinymce') }}
+    {{ encore_entry_script_tags('datepicker') }}
+    {{ encore_entry_script_tags('select2') }}
+    <script>
+      $('#table-templates').DataTable({
+        searching: false,
+        order: [[1, "asc"]],
+        sort: false,
+        pageLength: 10,
+      })
+
+      // Fix TinyMCE 5 x Bootstrap 5 modal
+      document.addEventListener('focusin', (e) => {
+        if (e.target.closest(".tox-tinymce-aux, .moxman-window, .tam-assetmanager-root") !== null) {
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datatables') }}
+    {{ encore_entry_link_tags('datepicker') }}
+{% endblock %}

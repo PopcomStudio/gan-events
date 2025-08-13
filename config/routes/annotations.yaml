@@ -1,0 +1,12 @@
+admin:
+    resource: ../../src/Controller/Admin
+    prefix: /dashboard
+    type: annotation
+
+front:
+    resource: ../../src/Controller/Front
+    type: annotation
+
+kernel:
+    resource: ../../src/Kernel.php
+    type: annotation

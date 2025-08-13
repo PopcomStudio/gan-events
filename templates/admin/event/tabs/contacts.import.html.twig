@@ -1,0 +1,76 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% block form_content %}
+
+    <div class="card mb-2 shadow">
+        <div class="card-header fw-bold text-dark d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-upload me-2"></i>
+                Import une liste de contacts
+            </div>
+        </div>
+        <div class="card-body">
+
+            {#    {{ form_start(import_form) }}#}
+            <p class="fw-bold text-primary">
+                <a type="button" data-bs-toggle="modal" class="d-block alert alert-warning"
+                   href="#preparer-fichier" data-bs-target="#preparer-fichier">
+                    <i class="fas fa-question-circle fa-fw me-1"></i>{{- '' -}}
+                    Comment préparer mon fichier d'invités&nbsp;?
+                </a>
+            </p>
+            {{ form_row(form.file) }}
+            <div class="row">
+                <div class="col-6">
+                    {{ form_row(form.thead) }}
+                </div>
+                <div class="col-6">
+                    {{ form_row(form.firstCol) }}
+                </div>
+            </div>
+            {#    <button type="submit" class="btn btn-secondary btn-sm">Importer</button>#}
+            {#    {{ form_end(import_form) }}#}
+
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="preparer-fichier" tabindex="-1" aria-labelledby="preparer-fichier-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h5 class="modal-title text-white" id="preparer-fichier-label">
+                        Comment préparer mon fichier d'invités&nbsp;?
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Utilisez <u>CibClients</u> pour générer un fichier Excel contenant les informations des clients
+                        que vous souhaitez inviter. Conservez uniquement les données des clients que vous souhaitez
+                        inviter et organiser les colonnes de la façon suivante&nbsp;:
+                    </p>
+                    <ul class="small">
+                        <li>Civilité (Madame / Monsieur)</li>
+                        <li>Prénom</li>
+                        <li>Nom</li>
+                        <li>Téléphone</li>
+                        <li>Email</li>
+                        <li>Entreprise</li>
+                        <li>Siret/ICX</li>
+                        <li>Inspecteur Commercial</li>
+                    </ul>
+                    <p class="fw-bold">
+                        Toutes les colonnes doivent être présentes. Seule la colonne <u>Email</u> doit obligatoirement
+                        être renseignée.
+                    </p>
+                    <p>
+                        Vous pouvez préciser le nombre de lignes d'en-tête ou de colonnes initiales au sein de votre fichier
+                        pour ne pas les inclure lors de l'import.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

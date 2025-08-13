@@ -1,0 +1,120 @@
+{% if form is defined %}
+    {% set emailFields %}
+        <div id="email_schedule_emailType">
+            {{ form_row(form.template) }}
+        </div>
+        <div id="email_schedule_input">
+            {{ form_row(form.subject) }}
+            {{ form_row(form.content) }}
+{#            {{ form_row(form.signature) }}#}
+        </div>
+    {% endset %}
+
+    {{ form_start(form, {attr: {class: 'modal-content'}}) }}
+{#    <div class="modal-content">#}
+        <div class="modal-header bg-primary">
+            <h5 class="modal-title text-white" id="modalLabel">
+                Email
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        {{ form_errors(form) }}
+        <div class="modal-body mb-0">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+            {% if form.sender is defined %}{{ form_row(form.sender) }}{% endif %}
+            {{ form_widget(form) }}
+            {{ emailFields }}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+
+            <script>
+                // TinyMCE
+                tinymce_reload();
+
+                // Switch Template / Input
+                var first = true;
+                $('#email_schedule_templateOrInput').on('change', function(){
+
+                    if ($(this).prop('checked')) {
+
+                        if (first) {
+
+                            $('#email_schedule_emailType').show();
+                            $('#email_schedule_input').hide();
+
+                        } else {
+
+                            $('#email_schedule_emailType').slideDown(300);
+                            $('#email_schedule_input').slideUp(300);
+                        }
+
+                    } else {
+
+                        if (first) {
+
+                            $('#email_schedule_emailType').hide();
+                            $('#email_schedule_input').show();
+
+                        } else {
+
+                            $('#email_schedule_emailType').slideUp(300);
+                            $('#email_schedule_input').slideDown(300);
+                        }
+                    }
+
+                    first = false;
+
+                }).trigger('change');
+
+                // Datepicker
+                $('#email_schedule_sendAt').datetimepicker({
+                    format: "d/m/Y H:i",
+                    step: 15
+                })
+
+                // Templates
+                $('#email_schedule_template').select2({
+                    ajax: {
+                        url: "{{ path('json_email_template', {id: event.id}) }}",
+                        data: function(params) {
+                            var query = {
+                                search: params.term,
+                                type: $('#email_schedule_type').val(),
+                                sender: {{ sender ? sender.id : 'null' }},
+                            };
+
+                            var sender = $('#email_schedule_sender');
+                            if (sender.length) {
+
+                                query.sender = sender.val();
+                            }
+
+                            return query;
+                        },
+                    }
+                });
+
+                $('#email_schedule_type, #email_schedule_sender').on('change', function(){
+                    $('#email_schedule_template').val(null).trigger('change');
+                })
+            </script>
+        </div>
+{#    </div>#}
+    {{ form_end(form) }}
+{% else %}
+    <div class="modal-content">
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+        </div>
+        <script>
+            var url = window.location.href;
+            var hash = window.location.hash;
+            var index_of_hash = url.indexOf(hash) || url.length;
+            url = url.substr(0, index_of_hash);
+            window.location.href = url+'#planning';
+            document.location.reload();
+        </script>
+    </div>
+{% endif %}

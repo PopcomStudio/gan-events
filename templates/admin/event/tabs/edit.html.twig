@@ -1,0 +1,305 @@
+{% extends 'admin/event/base.html.twig' %}
+
+{% import _self as _macro %}
+
+{% block form_content %}
+
+    <div class="accordion" id="accordion">
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header mb-0 p-0" id="accordionHeadingInfo">
+                <button class="btn btn-link text-dark text-start w-100 text-start fw-bold -underline" type="button" data-bs-toggle="collapse"
+                        aria-expanded="true" data-bs-target="#accordionInfo" aria-controls="accordionInfo">
+                    <span class="fas fa-info-circle fa-fw me-2"></span>Informations générales
+                </button>
+            </h2>
+            <div class="collapse show" id="accordionInfo" aria-labelledby="accordionHeadingInfo" data-parent="#accordion">
+                <div class="card-body px-4">
+                    <div class="row">
+                        {% if form.switchable is defined %}
+                            <div class="col-12">
+                                {{ form_row(form.switchable) }}
+                            </div>
+                        {% endif %}
+                        <div class="col-12 col-lg-8">
+                            {{ form_row(form.name) }}
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            {{ form_row(form.target) }}
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            {{ form_row(form.beginAt) }}
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            {{ form_row(form.finishAt) }}
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            {{ form_row(form.totalTickets) }}
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            {{ form_row(form.slug) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-4 border-top">
+                    {{ form_row(form.foundation) }}
+                </div>
+                <div class="card-body px-4 border-top">
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form_row(form.description) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-4 border-top">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form_row(form.visual) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.logo) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header p-0 mb-0" id="accordionHeadingSpecial">
+                <button class="btn btn-link text-dark text-start w-100 btn-block text-start fw-bold -underline" type="button" data-bs-toggle="collapse"
+                        aria-expanded="false" data-bs-target="#accordionSpecial" aria-controls="accordionSpecial">
+                    <span class="fas fa-bullhorn fa-fw me-2"></span>Type d'événement <span class="small">Golf, Cinéma, etc</span>
+                </button>
+            </h2>
+            <div class="card-body px-4 collapse" id="accordionSpecial" aria-labelledby="accordionHeadingSpecial" data-parent="#accordion">
+                {{ form_row(form.type) }}
+                <div id="special-golfcup">
+                    <p class="h6">Ajoute les options ci-dessous au formulaire d'inscription&nbsp;:</p>
+                    <ul>
+                        <li>Je suis golfeur,</li>
+                        <li>Numéro de licence,</li>
+                        <li>Index.</li>
+                    </ul>
+                </div>
+                <div id="special-projection">
+                    <p class="h6 mb-3">Précisez les détails du film&nbsp;:</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form_row(form.movieTitle) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieReleasedAt) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieStarredBy) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieDirectedBy) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieGenres) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieCountries) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieRunningTime) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.movieAwards) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_row(form.movieOverview) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_row(form.moviePoster) }}
+                        </div>
+                    </div>
+                </div>
+                <div id="special-ateliers">
+                    {{ form_row(form.workshops) }}
+                    {% if form.timeSlots is defined %}
+                        {{ form_row(form.timeSlots) }}
+                    {% endif %}
+                </div>
+                <div id="special-standard_plus_moments">
+                    {{ form_row(form.moments) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header p-0 mb-0" id="accordionHeadingAddress">
+                <button class="btn btn-link text-dark text-start w-100 btn-block text-start fw-bold -underline" type="button" data-bs-toggle="collapse"
+                        aria-expanded="false" data-bs-target="#accordionAddress" aria-controls="accordionAddress">
+                    <span class="fas fa-map-marker-alt fa-fw me-2"></span>Localisation <span class="small">Carte et adresse</span>
+                </button>
+            </h2>
+            <div class="card-body px-4 collapse" id="accordionAddress" aria-labelledby="accordionHeadingAddress" data-parent="#accordion">
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_row(form.autocomplete) }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form_row(form.address) }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div id="map" style="width:100%;height:300px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header p-0 mb-0" id="accordionHeadingUsers">
+                <button class="btn btn-link text-dark text-start w-100 btn-block text-start -underline fw-bold" type="button" data-bs-toggle="collapse"
+                        aria-expanded="false" data-bs-target="#accordionUsers" aria-controls="accordionUsers">
+                    <span class="fas fa-users fa-fw me-2"></span>Utilisateurs <span class="small">Administrateurs &amp; Consultants de l'événement</span>
+                </button>
+            </h2>
+            <div class="card-body px-4 collapse" id="accordionUsers" aria-labelledby="accordionHeadingUsers" data-parent="#accordion">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.managers) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.viewers) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header p-0 mb-0" id="accordionHeadingTickets">
+                <button class="btn btn-link text-dark text-start w-100 btn-block text-start fw-bold -underline" type="button" data-bs-toggle="collapse"
+                        aria-expanded="false" data-bs-target="#accordionTickets" aria-controls="accordionTickets">
+                    <span class="fas fa-ticket-alt fa-fw me-2"></span>Tickets
+                </button>
+            </h2>
+            <div class="card-body px-4 collapse" id="accordionTickets" aria-labelledby="accordionHeadingTickets" data-parent="#accordion">
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_row(form.ticketVisual) }}
+                    </div>
+                    <div class="col-12">
+                      {{ form_row(form.addTicket) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-2">
+            <h2 class="card-header p-0 mb-0" id="accordionHeadingMedias">
+                <button class="btn btn-link text-dark text-start w-100 btn-block text-start fw-bold -underline" type="button" data-bs-toggle="collapse"
+                        aria-expanded="false" data-bs-target="#accordionMedias" aria-controls="accordionMedias">
+                    <span class="fas fa-photo-video fa-fw me-2"></span>Médias
+                </button>
+            </h2>
+            <div class="card-body px-4 collapse" id="accordionMedias" aria-labelledby="accordionHeadingMedias" data-parent="#accordion">
+                {{ form_row(form.poster) }}
+            </div>
+        </div>
+
+    </div>
+
+    {% if event.id %}
+    <a href="{{ path('event.delete', {id: event.id}) }}" class="text-danger small me-2">
+        Supprimer
+    </a>
+    {% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        var filemanager_url = "{{ path('filemanager_browse', {type: 'event', id: event.id}) }}"
+    </script>
+    {{ encore_entry_script_tags('event') }}
+    {{ encore_entry_script_tags('tinymce') }}
+    {{ encore_entry_script_tags('slugify') }}
+    {{ encore_entry_script_tags('datepicker') }}
+    {{ encore_entry_script_tags('select2') }}
+    {{ encore_entry_script_tags('form-repeater') }}
+    <script async src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api }}&libraries=places&callback=initAutocomplete&v=weekly"></script>
+    <script>
+      $('[data-init="select2"]').select2();
+
+      $('#event_name').on('focusout', function (e) {
+
+        var $slug = $('#event_slug');
+
+        if ($slug.val()) return;
+
+        var val = slugify($(this).val(), {
+          lower: true,
+          locale: 'fr',
+          strict: true,
+        });
+
+        val = val.replace('-a-', '-');
+        val = val.replace('-et-', '-');
+        val = val.replace('-de-', '-');
+        val = val.replace('-du-', '-');
+        val = val.replace('-d-', '-');
+        val = val.replace('-la-', '-');
+        val = val.replace('-le-', '-');
+        val = val.replace('-les-', '-');
+        val = val.replace('-l-', '-');
+        val = val.replace('-m-', '-');
+        val = val.replace('-t-', '-');
+        val = val.replace('-ma-', '-');
+        val = val.replace('-mon-', '-');
+        val = val.replace('-mes-', '-');
+        val = val.replace('-ton-', '-');
+        val = val.replace('-ta-', '-');
+        val = val.replace('-tes-', '-');
+
+        $slug.val(val);
+      });
+
+      $('#event_slug').on("change keypress keyup blur", function (e) {
+
+        var val = $(this).val().replace(/[^0-9A-Za-z\-]/g, '').toLowerCase();
+
+        val = val.replace(/-+/g, '-');
+
+        $(this).val(val);
+
+      }).on("focusout", function (e) {
+
+        var val = $(this).val().replace(/-*$/g, '').replace(/^-*/g, '');
+
+        $(this).val(val);
+      });
+
+      // Datepicker
+      $('#event_beginAt').datetimepicker({
+        format: "d/m/Y H:i",
+        step: 15
+      })
+
+      $('#event_finishAt').datetimepicker({
+        format: "d/m/Y H:i",
+        step: 15
+      })
+
+      $('#event_movieReleasedAt').datetimepicker({
+        format: "d/m/Y",
+        timepicker: false,
+      })
+
+      // Event type
+      $('#event_type').on('change', function (e) {
+
+        $('[id^="special-"]').hide();
+        $('#special-' + e.target.value).show()
+
+      }).trigger('change');
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('datepicker') }}
+{% endblock %}

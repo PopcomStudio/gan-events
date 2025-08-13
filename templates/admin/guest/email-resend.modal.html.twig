@@ -1,0 +1,53 @@
+{% if send %}
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="alert alert-success small">
+                Email renvoyé.
+            </div>
+        </div>
+        <script>
+          var url = window.location.href;
+          var hash = window.location.hash;
+          var index_of_hash = url.indexOf(hash) || url.length;
+          url = url.substr(0, index_of_hash);
+          window.location.href = url;
+          document.location.reload();
+        </script>
+    </div>
+{% else %}
+<div class="modal-content">
+    <div class="modal-body p-0">
+    <ul class="list-group">
+        {% for schedule in emailSchedules %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>
+                    <span>
+                        {{ schedule.displayType|capitalize -}}
+                    </span>
+                    <small class="d-block">
+                        Envoyé {{ schedule.sendAt|format_date(pattern="eeee dd MMMM y @ H:mm", locale="fr") -}}
+                        {% if schedule.template -%}
+                            ,<br/>Selon modèle&nbsp; : #{{ schedule.template.id }} {{ schedule.template.subject }}
+                        {%- endif %}
+                    </small>
+                    {% if schedule.sender == eventHelper.currentSender %}
+                        <span class="badge badge-success">moi uniquement</span>
+                    {% elseif schedule.sender %}
+                        <span class="badge badge-warning">{{ schedule.sender.displayName }} uniquement</span>
+                    {% else %}
+                        <span class="badge badge-danger">global</span>
+                    {% endif %}
+                    {% if schedule.onlyNew %}<span class="badge bg-primary">nouveaux</span>{% endif %}
+                </span>
+                <form method="post" action="{{ path('guest_resend', {id: guest.id}) }}">
+                    <input type="hidden" name="schedule_id" value="{{ schedule.id }}">
+                    <button type="submit" class="btn btn-primary btn-circle">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+</div>
+{% endif %}

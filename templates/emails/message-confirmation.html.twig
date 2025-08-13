@@ -1,0 +1,52 @@
+<p>Merci pour votre inscription à notre événement <b>{{ event.name }}</b>.</p>
+<p>Rendez-vous {{ event.beginAt|format_date(pattern="eeee d MMMM y, à H:mm", locale="fr") }}{{ address }}.</p>
+{% if event.type == 'ateliers' %}
+    {% for workshop in workshops %}
+        {% if loop.first %}<p>Voici les ateliers auxquels vous souhaitez participer :</p><ul>{% endif %}
+        <li>{{ workshop.timeslot.startAt|format_date(pattern="H:mm", locale="fr") }}-{{ workshop.timeslot.endAt|format_date(pattern="H:mm", locale="fr") }} : {{ workshop.workshop.name }} </li>
+        {% if loop.last %}</ul>{% endif %}
+    {% endfor %}
+{% elseif event.type == 'standard_plus_moments' %}
+    <p>Rappel, vous êtes inscrit à :</p>
+    <ul>
+        {% for choice in guest.momentChoices %}
+            {% if choice.event.type == 'obligatoire' %}
+            <li>
+                <strong>{{ choice.event.name }}</strong>
+                <ul>
+                    <li>Date : {{ choice.event.beginAt|format_date(pattern="eeee d MMMM y", locale="fr") }}</li>
+                    <li>Heure : {{ choice.event.beginAt|format_date(pattern="H:mm", locale="fr") }}{% if choice.event.finishAt %} - {{ choice.event.finishAt|format_date(pattern="H:mm", locale="fr") }}{% endif %}</li>
+                    {% if choice.event.location %}
+                    <li>Lieu : {{ choice.event.location|nl2br }}</li>
+                    {% endif %}
+                    {% if choice.event.description %}
+                    <li>Description : {{ choice.event.description|nl2br }}</li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    {% if guest.momentChoices|filter(choice => choice.event.type == 'facultatif')|length > 0 %}
+    <p>Et aux temps forts :</p>
+    <ul>
+        {% for choice in guest.momentChoices %}
+            {% if choice.event.type == 'facultatif' %}
+            <li>
+                <strong>{{ choice.event.name }}</strong>
+                <ul>
+                    <li>Date : {{ choice.event.beginAt|format_date(pattern="eeee d MMMM y", locale="fr") }}</li>
+                    <li>Heure : {{ choice.event.beginAt|format_date(pattern="H:mm", locale="fr") }}{% if choice.event.finishAt %} - {{ choice.event.finishAt|format_date(pattern="H:mm", locale="fr") }}{% endif %}</li>
+                    {% if choice.event.location %}
+                    <li>Lieu : {{ choice.event.location|nl2br }}</li>
+                    {% endif %}
+                    {% if choice.event.description %}
+                    <li>Description : {{ choice.event.description|nl2br }}</li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+{% endif %}

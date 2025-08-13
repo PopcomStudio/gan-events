@@ -1,0 +1,148 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ pageTitle | default( eventHelper.event.name | default("Nouvel événement") )}}{% endblock %}
+{% block pageTitle %}{{ block('title') }}{% endblock %}
+
+{% block pageDescription -%}
+    {% if eventHelper.hasCollection %}
+        <a href="{{ path('app_collection', {id: eventHelper.event.parent.id}) }}" class="text-white">{{ eventHelper.event.parent.name }}</a>
+    {% endif %}
+{%- endblock %}
+
+{% block navigation -%}
+    {% if eventHelper.event %}
+        {% if eventHelper.switchSenderForm %}
+            <span class="nav-header">Voir en tant que</span>
+            <div class="nav-link">
+                {{ form_start(eventHelper.switchSenderForm) }}
+                {{ form_end(eventHelper.switchSenderForm) }}
+            </div>
+            <hr class="nav-divider"/>
+        {% endif %}
+        {% if eventHelper.isCollection %}
+            {% include 'admin/_partial/navigation.html.twig' %}
+        {% else %}
+            <span class="nav-header">Suivi</span>
+            <a href="{{ eventHelper.event ? path('app_event_resume', {id: eventHelper.event.id}) : '#' }}" class="nav-link text-inherit {%- if is_route('app_event_resume') %} active{% endif %}">
+                <i class="fas fa-chart-line fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                Résumé
+            </a>
+            {% if is_granted('MANAGE_ALL_EVENTS') %}
+            <a href="{{ path('event.move', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('event.move') %} active{% endif %}">
+                <i class="fas fa-exchange-alt fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                Déplacer l'événement
+            </a>
+            {% endif %}
+            {% if eventHelper.event.addTicket and is_granted('MANAGE_QRCODE', eventHelper.event) %}
+                <a href="{{ path('app_event_qrscanner', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_qrscanner') %} active{% endif %}">
+                    <i class="fas fa-qrcode fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Scanner les tickets
+                </a>
+            {% endif %}
+            <hr class="nav-divider"/>
+            <span class="nav-header">Préparation</span>
+            {% if is_granted('EDIT', eventHelper.event) and not eventHelper.currentSender %}
+                <a href="{{ path('app_event_edit', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_edit', true) %} active{% endif %}">
+                    <i class="fas fa-cogs fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Réglages généraux
+                </a>
+                <a href="{{ path('app_event_senders', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_senders', true) %} active{% endif %}">
+                    <i class="fas fa-users fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Expéditeurs
+                </a>
+            {% endif %}
+            {% if eventHelper.canManageEmail %}
+                <a href="{{ path('app_event_emails_schedules', {id: eventHelper.event.id}) }}" class="nav-link text-inherit" {# data-bs-toggle="collapse" data-bs-target=".navEventEmails" role="button" aria-expanded="{%- if is_route('app_event_emails', true) %}true{% else %}false{% endif %}"#}>
+                    <i class="fas fa-envelope fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Emails
+                </a>
+                <div class="navEventEmails nav-link collapse{%- if is_route('app_event_emails', true) %} show{% endif %}">
+                {% if eventHelper.canManageEmailSchedules %}
+                    <a href="{{ path('app_event_emails_schedules', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_emails_schedules') %} active{% endif %}">
+                        <i class="fas fa-paper-plane fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Planification des envois
+                    </a>
+                {% endif %}
+                {% if eventHelper.canManageEmailTemplates %}
+                    <a href="{{ path('app_event_emails_templates', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_emails_templates') %} active{% endif %}">
+                        <i class="fas fa-envelope-open-text fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Modèles d'email
+                    </a>
+                {% endif %}
+                {% if eventHelper.canManageEmailVisuals %}
+                    <a href="{{ path('app_event_emails_visuals', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_emails_visuals') %} active{% endif %}">
+                        <i class="fas fa-images fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Visuels
+                    </a>
+                {% endif %}
+                </div>
+            {% endif %}
+            {% if eventHelper.canManageContacts %}
+                <a href="{{ path('app_event_contacts', {id: eventHelper.event.id}) }}" class="nav-link text-inherit">
+                    <i class="far fa-id-card fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Contacts
+                </a>
+                <div class="navEventEmails nav-link collapse{%- if is_route('app_event_contacts', true) %} show{% endif %}">
+                    <a href="{{ path('app_event_contacts', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_contacts') %} active{% endif %}">
+                        <i class="fas fa-paper-plane fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Consulter la liste
+                    </a>
+                    <a href="{{ path('app_event_contacts_import', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_contacts_import') %} active{% endif %}">
+                        <i class="fas fa-upload fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Importer
+                    </a>
+                    <a href="{{ path('app_event_contacts_add', {id: eventHelper.event.id}) }}" class="nav-link text-inherit {%- if is_route('app_event_contacts_add') %} active{% endif %}">
+                        <i class="fas fa-user-plus fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                        Ajouter
+                    </a>
+                </div>
+            {% endif %}
+            <hr class="nav-divider"/>
+            {% if eventHelper.event.poster %}
+                <span class="nav-header">Utiles</span>
+                <a href="{{ vich_uploader_asset(eventHelper.event.poster, 'file') }}" class="nav-link text-inherit" download>
+                    <i class="fas fa-image fa-fw me-2 opacity-50 text-{{ eventHelper.dashboardColor }}"></i>
+                    Télécharger l'affiche
+                </a>
+                <hr class="nav-divider"/>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{%- endblock %}
+
+{% block content %}
+
+    {% if eventHelper.event %}
+    <div style="position:absolute;top: 10px;right: 10px;" class="pt-1 me-1">
+        <a href="{{ path('event_show', {id: eventHelper.event.id}) }}" target="_blank" class="btn btn-light btn-circle" data-bs-tooltip="true" title="Prévisualiser l'événement">
+            <i class="fas fa-eye fa-fw"></i>
+            <span class="sr-only">Prévisualiser l'événement</span>
+        </a>
+    </div>
+    {% endif %}
+
+    {% if form is defined %}{{ form_start(form) }}{% endif %}
+
+    {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+
+    {% block form_content %}{% endblock %}
+
+    {% if form is defined %}
+        <div class="pb-3 pe-3" style="position:fixed;bottom:0;right:0;z-index:1">
+            <button type="submit" class="btn btn-primary">
+                <i class="{{ formButtonIcon|default('far fa-save') }} me-1"></i> {{ formButton|default('Enregistrer') }}
+            </button>
+        </div>
+        {{ form_end(form) }}
+    {% endif %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $('#switch_sender_sender').on('change', function(){
+          $(this).parents('form').submit();
+        })
+    </script>
+{% endblock %}

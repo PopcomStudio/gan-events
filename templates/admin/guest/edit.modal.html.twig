@@ -1,0 +1,28 @@
+{% if form is defined %}
+    {{ form_start(form, {attr: {class: 'modal-content'}}) }}
+        <div class="modal-header bg-primary">
+            <h5 class="modal-title text-white" id="modalLabel">
+                Editer l'invité
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        {{ form_errors(form) }}
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+            {{ form_widget(form) }}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+{% else %}
+    <div class="modal-content">
+        <div class="modal-body">
+            {% include '_partial/alert.html.twig' with {flashes: app.flashes} only %}
+        </div>
+        <script>
+            document.location.reload();
+        </script>
+    </div>
+{% endif %}

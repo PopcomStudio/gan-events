@@ -1,0 +1,193 @@
+@import 'scss/variables';
+
+@import 'scss/api';
+
+// Import Bootstrap
+@import "~bootstrap/scss/bootstrap";
+
+// Import Fontawesome Free
+@import '~@fortawesome/fontawesome-free/scss/fontawesome';
+@import '~@fortawesome/fontawesome-free/scss/regular';
+@import '~@fortawesome/fontawesome-free/scss/solid';
+@import '~@fortawesome/fontawesome-free/scss/brands';
+
+// File manager styles
+@import './file-manager';
+
+// Import Select2 + Select2 Bootstrap Theme
+@import '~select2/src/scss/core';
+@import '~select2-bootstrap-5-theme/src/select2-bootstrap-5-theme';
+//@import '~@ttskch/select2-bootstrap4-theme/src/select2-bootstrap4';
+.select2-container--bootstrap-5 {
+  display: block;
+}
+
+// Import DateTimePicker
+@import "~jquery-datetimepicker/jquery.datetimepicker.css";
+
+// Custom
+@import "scss/functions";
+@import "scss/buttons";
+@import "scss/borders";
+@import "scss/form";
+@import "scss/login";
+@import "scss/typo";
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+#wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  //overflow: hidden;
+}
+
+#header {
+  z-index: $zindex-sticky;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+#wrapper-content {
+  display: flex;
+  flex-direction: row;
+  //justify-content: flex-start;
+  //align-items: flex-start;
+  flex-shrink: 1;
+  flex-grow: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden
+}
+
+#sidebar {
+  width: 260px;
+  min-height: 100%;
+  flex-shrink: 0;
+  flex-grow: 0;
+  background-color: white;
+  overflow: auto;
+  z-index: $zindex-dropdown;
+}
+
+#body {
+  width: 100%;
+  min-height: 100%;
+  flex-shrink: 1;
+  flex-grow: 0;
+  overflow: auto;
+  position: relative;
+}
+
+.offcanvas {
+  overflow: auto;
+}
+
+.nav-header {
+  @extend .nav-link;
+  color: $inherit !important;
+  opacity: 0.35;
+  font-size: $small-font-size;
+  font-weight: $display-font-weight;
+  text-transform: uppercase;
+  font-family: "Open Sans", $font-family-base;
+}
+
+.table-striped tbody tr:nth-of-type(odd), .table-striped tbody tr:nth-of-type(odd) td {
+  background-color: #F7F9FA!important;
+}
+
+body.event {
+  background-color: white;
+}
+
+.-underline {
+  &, &:hover, &:active, &:focus {
+    text-decoration: none;
+  }
+}
+
+.bg-cover {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.event-header {
+  position: relative;
+  padding-bottom: 40%;
+
+  & > div {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.gan-arrow {
+  position: relative;
+  width: 150px;
+  background-color: $secondary;
+  text-transform: uppercase;
+
+  &:after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: -75px;
+    width: 100%;
+    border-top: 75px solid $secondary;
+    border-left: 75px solid transparent;
+    border-right: 75px solid transparent;
+  }
+
+  @include media-breakpoint-down(md) {
+    width: 70px;
+    font-size: 0;
+    text-indent: -3000px;
+
+    &:after {
+      content: "";
+      bottom: -35px;
+      border-top: 35px solid $secondary;
+      border-left: 35px solid transparent;
+      border-right: 35px solid transparent;
+    }
+  }
+}
+
+.brand a {
+  &, &:hover {
+    text-decoration: none;
+  }
+}
+
+tr.bg-secondary {
+  th.dtfc-fixed-left, th.dtfc-fixed-right {
+    background-color: $secondary;
+  }
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  &, td {
+    background-color: #E6E6E6;
+  }
+}
+
+.table-striped tbody tr:nth-of-type(even) {
+  &, td {
+    background-color: white;
+  }
+}
+
+.nav-link.active {
+  background: transparentize($primary, 0.85);
+  //&.text-inherit {
+  //  color: transparentize($primary, 0.1) !important;
+  //}
+}
