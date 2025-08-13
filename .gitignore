@@ -55,5 +55,8 @@ Thumbs.db
 # Custom var directory
 /_var/
 
+# Logs
+*.log
+
 # Environment specific
 .env
