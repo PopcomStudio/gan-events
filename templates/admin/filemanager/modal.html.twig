@@ -384,11 +384,12 @@
         
         // Function to show error message
         function showError(message) {
-            errorText.textContent = message;
+            console.log('Showing error:', message); // Debug log
+            errorText.innerHTML = message; // Use innerHTML to support <br> tags
             errorContainer.style.display = 'block';
             setTimeout(() => {
                 errorContainer.style.display = 'none';
-            }, 5000);
+            }, 8000); // Extended to 8 seconds for better user experience
         }
         
         // Browse files
@@ -425,11 +426,11 @@
             handleFiles(e.dataTransfer.files);
         });
         
-        // Files are always visible now
-        
         // Handle file upload
         function handleFiles(files) {
             if (files.length === 0) return;
+            
+            console.log('Handling files:', files); // Debug log
             
             // Hide any previous error messages
             errorContainer.style.display = 'none';
@@ -459,24 +460,38 @@
                 body: formData
             })
             .then(response => {
+                console.log('Response status:', response.status, response.ok); // Debug log
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
                 
                 // Parse JSON response regardless of status code
-                return response.json().then(data => ({
-                    data: data,
-                    ok: response.ok,
-                    status: response.status
-                }));
+                return response.json().then(data => {
+                    console.log('Response data:', data); // Debug log
+                    return {
+                        data: data,
+                        ok: response.ok,
+                        status: response.status
+                    };
+                }).catch(parseError => {
+                    console.log('JSON parse error:', parseError); // Debug log
+                    // If JSON parsing fails, create error response
+                    return {
+                        data: { error: 'Réponse invalide du serveur' },
+                        ok: false,
+                        status: response.status
+                    };
+                });
             })
             .then(result => {
                 const { data, ok, status } = result;
+                console.log('Processing result:', result); // Debug log
                 
                 // Hide progress bar
                 setTimeout(() => {
                     progressContainer.style.display = 'none';
                 }, 1000);
                 
+                // Handle successful uploads
                 if (ok && data.success) {
                     // Add files to list
                     if (data.files && data.files.length > 0) {
@@ -489,17 +504,22 @@
                     fileInput.value = '';
                 }
                 
-                // Handle errors - both from success response with errors and error status codes
+                // Handle errors - Check for errors in any case
+                let hasErrors = false;
                 if (data.errors && data.errors.length > 0) {
-                    const errorMessages = data.errors.map(e => e.file + ': ' + e.error);
-                    showError('Erreurs:\\n' + errorMessages.join('\\n'));
-                } else if (!ok) {
-                    // Handle single error message
-                    const errorMessage = data.error || data.message || 'Erreur lors du téléchargement';
+                    const errorMessages = data.errors.map(e => `<strong>${e.file}:</strong> ${e.error}`);
+                    showError(errorMessages.join('<br>'));
+                    hasErrors = true;
+                }
+                
+                // If no specific errors but response is not ok, show general error
+                if (!hasErrors && !ok) {
+                    const errorMessage = data.error || data.message || `Erreur ${status}: Échec du téléchargement`;
                     showError(errorMessage);
                 }
             })
             .catch(error => {
+                console.log('Network error:', error); // Debug log
                 clearInterval(progressInterval);
                 progressContainer.style.display = 'none';
                 showError('Erreur réseau: ' + error.message);
