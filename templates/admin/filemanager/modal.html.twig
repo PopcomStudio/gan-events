@@ -267,6 +267,21 @@
         .delete-btn:hover {
             background: #fef2f2;
         }
+        
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+            color: #b91c1c;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .error-message .error-icon {
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -299,6 +314,11 @@
                     <span>Fichiers supportés : .jpg, .png, .webp, .pdf, .doc, .docx, .xls, .xlsx, .txt, .ppt, .pptx</span>
                 </div>
                 <span>Taille maximale : 10MB</span>
+            </div>
+            
+            <div id="errorContainer" class="error-message">
+                <i class="fas fa-exclamation-triangle error-icon"></i>
+                <span id="errorText"></span>
             </div>
             
             <div id="progressContainer" class="progress-container">
@@ -354,11 +374,22 @@
         const browseFiles = document.getElementById('browseFiles');
         const progressContainer = document.getElementById('progressContainer');
         const progressBar = document.getElementById('progressBar');
+        const errorContainer = document.getElementById('errorContainer');
+        const errorText = document.getElementById('errorText');
         const continueBtn = document.getElementById('continueBtn');
         const uploadSection = document.getElementById('uploadSection');
         const fileListSection = document.getElementById('fileListSection');
         const backBtn = document.getElementById('backBtn');
         const fileList = document.getElementById('fileList');
+        
+        // Function to show error message
+        function showError(message) {
+            errorText.textContent = message;
+            errorContainer.style.display = 'block';
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
         
         // Browse files
         browseFiles.addEventListener('click', function(e) {
@@ -400,6 +431,9 @@
         function handleFiles(files) {
             if (files.length === 0) return;
             
+            // Hide any previous error messages
+            errorContainer.style.display = 'none';
+            
             const formData = new FormData();
             for (let file of files) {
                 formData.append('files[]', file);
@@ -424,34 +458,51 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
                 
-                if (data.success) {
+                // Parse JSON response regardless of status code
+                return response.json().then(data => ({
+                    data: data,
+                    ok: response.ok,
+                    status: response.status
+                }));
+            })
+            .then(result => {
+                const { data, ok, status } = result;
+                
+                // Hide progress bar
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 1000);
+                
+                if (ok && data.success) {
                     // Add files to list
-                    data.files.forEach(file => {
-                        addFileToList(file);
-                    });
+                    if (data.files && data.files.length > 0) {
+                        data.files.forEach(file => {
+                            addFileToList(file);
+                        });
+                    }
                     
                     // Reset
                     fileInput.value = '';
-                    
-                    // Hide progress
-                    setTimeout(() => {
-                        progressContainer.style.display = 'none';
-                    }, 1000);
                 }
                 
+                // Handle errors - both from success response with errors and error status codes
                 if (data.errors && data.errors.length > 0) {
-                    alert('Erreurs:\n' + data.errors.map(e => e.file + ': ' + e.error).join('\n'));
+                    const errorMessages = data.errors.map(e => e.file + ': ' + e.error);
+                    showError('Erreurs:\\n' + errorMessages.join('\\n'));
+                } else if (!ok) {
+                    // Handle single error message
+                    const errorMessage = data.error || data.message || 'Erreur lors du téléchargement';
+                    showError(errorMessage);
                 }
             })
             .catch(error => {
                 clearInterval(progressInterval);
                 progressContainer.style.display = 'none';
-                alert('Erreur: ' + error.message);
+                showError('Erreur réseau: ' + error.message);
             });
         }
         
@@ -529,11 +580,11 @@
                     if (data.success) {
                         item.remove();
                     } else {
-                        alert('Erreur: ' + (data.error || 'Erreur inconnue'));
+                        showError('Erreur: ' + (data.error || 'Erreur inconnue'));
                     }
                 })
                 .catch(error => {
-                    alert('Erreur: ' + error.message);
+                    showError('Erreur: ' + error.message);
                 });
             });
         }
