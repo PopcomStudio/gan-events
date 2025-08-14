@@ -11,24 +11,18 @@ class FileManagerService
     private string $uploadsDirectory;
     private Filesystem $filesystem;
     private array $allowedMimeTypes = [
-        'image/png',
-        'image/jpg',
         'image/jpeg',
-        'image/gif',
+        'image/png',
         'image/webp',
         'application/pdf',
+        'application/x-pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'application/vnd.oasis.opendocument.text',
-        'application/vnd.oasis.opendocument.spreadsheet',
-        'application/zip',
-        'text/csv',
         'text/plain',
-        'application/x-zip-compressed',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
 
     public function __construct(string $projectDir)
@@ -154,13 +148,8 @@ class FileManagerService
             'jpg' => 'Image',
             'jpeg' => 'Image',
             'png' => 'Image',
-            'gif' => 'Image',
             'webp' => 'Image',
-            'zip' => 'Archive',
-            'csv' => 'CSV',
             'txt' => 'Texte',
-            'odt' => 'OpenDocument',
-            'ods' => 'OpenDocument',
         ];
         
         return $types[strtolower($extension)] ?? 'Fichier';
@@ -168,7 +157,7 @@ class FileManagerService
 
     private function isImage(string $extension): bool
     {
-        return in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+        return in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'webp']);
     }
 
     private function formatFileSize(int $bytes): string
