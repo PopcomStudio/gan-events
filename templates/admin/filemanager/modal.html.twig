@@ -384,12 +384,11 @@
         
         // Function to show error message
         function showError(message) {
-            console.log('Showing error:', message); // Debug log
-            errorText.innerHTML = message; // Use innerHTML to support <br> tags
+            errorText.innerHTML = message;
             errorContainer.style.display = 'block';
             setTimeout(() => {
                 errorContainer.style.display = 'none';
-            }, 8000); // Extended to 8 seconds for better user experience
+            }, 8000);
         }
         
         // Browse files
@@ -430,8 +429,6 @@
         function handleFiles(files) {
             if (files.length === 0) return;
             
-            console.log('Handling files:', files); // Debug log
-            
             // Hide any previous error messages
             errorContainer.style.display = 'none';
             
@@ -460,31 +457,22 @@
                 body: formData
             })
             .then(response => {
-                console.log('Response status:', response.status, response.ok); // Debug log
                 clearInterval(progressInterval);
                 progressBar.style.width = '100%';
                 
-                // Parse JSON response regardless of status code
-                return response.json().then(data => {
-                    console.log('Response data:', data); // Debug log
-                    return {
-                        data: data,
-                        ok: response.ok,
-                        status: response.status
-                    };
-                }).catch(parseError => {
-                    console.log('JSON parse error:', parseError); // Debug log
-                    // If JSON parsing fails, create error response
-                    return {
-                        data: { error: 'Réponse invalide du serveur' },
-                        ok: false,
-                        status: response.status
-                    };
-                });
+                // Always try to parse the JSON, regardless of status
+                return response.json().then(data => ({
+                    data: data,
+                    ok: response.ok,
+                    status: response.status
+                })).catch(() => ({
+                    data: { error: 'Réponse invalide du serveur' },
+                    ok: false,
+                    status: response.status
+                }));
             })
             .then(result => {
-                const { data, ok, status } = result;
-                console.log('Processing result:', result); // Debug log
+                const { data, ok } = result;
                 
                 // Hide progress bar
                 setTimeout(() => {
@@ -492,34 +480,28 @@
                 }, 1000);
                 
                 // Handle successful uploads
-                if (ok && data.success) {
-                    // Add files to list
-                    if (data.files && data.files.length > 0) {
-                        data.files.forEach(file => {
-                            addFileToList(file);
-                        });
-                    }
-                    
-                    // Reset
+                if (ok && data.success && data.files && data.files.length > 0) {
+                    data.files.forEach(file => {
+                        addFileToList(file);
+                    });
                     fileInput.value = '';
                 }
                 
-                // Handle errors - Check for errors in any case
-                let hasErrors = false;
+                // Handle errors - show specific file errors
                 if (data.errors && data.errors.length > 0) {
                     const errorMessages = data.errors.map(e => `<strong>${e.file}:</strong> ${e.error}`);
                     showError(errorMessages.join('<br>'));
-                    hasErrors = true;
                 }
-                
-                // If no specific errors but response is not ok, show general error
-                if (!hasErrors && !ok) {
-                    const errorMessage = data.error || data.message || `Erreur ${status}: Échec du téléchargement`;
-                    showError(errorMessage);
+                // Handle single error message
+                else if (data.error) {
+                    showError(data.error);
+                }
+                // If response is not ok but no specific error message
+                else if (!ok) {
+                    showError('Erreur lors du téléchargement des fichiers');
                 }
             })
             .catch(error => {
-                console.log('Network error:', error); // Debug log
                 clearInterval(progressInterval);
                 progressContainer.style.display = 'none';
                 showError('Erreur réseau: ' + error.message);
@@ -533,13 +515,14 @@
             fileItem.dataset.filename = file.name;
             
             let preview;
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(file.extension)) {
+            if (['jpg', 'jpeg', 'png', 'webp'].includes(file.extension)) {
                 preview = `<img src="${file.url}" alt="${file.name}">`;
             } else {
                 let icon = 'fa-file-alt';
                 if (file.extension === 'pdf') icon = 'fa-file-pdf';
                 else if (['doc', 'docx'].includes(file.extension)) icon = 'fa-file-word';
                 else if (['xls', 'xlsx'].includes(file.extension)) icon = 'fa-file-excel';
+                else if (['ppt', 'pptx'].includes(file.extension)) icon = 'fa-file-powerpoint';
                 
                 preview = `<div class="file-icon-container">
                     <i class="fas ${icon} file-icon"></i>
