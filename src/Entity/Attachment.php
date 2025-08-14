@@ -25,29 +25,22 @@ class Attachment
 
     /**
      * @Assert\File(
-     *     maxSize = "10240k",
+     *     maxSize = "10M",
      *     mimeTypes = {
-     *          "text/plain",
-     *          "application/msword",
-     *          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-     *          "application/vnd.oasis.opendocument.text",
-     *          "application/vnd.ms-excel",
-     *          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-     *          "application/vnd.oasis.opendocument.spreadsheet",
-     *          "text/csv",
-     *          "application/vnd.ms-powerpoint",
-     *          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-     *          "application/vnd.oasis.opendocument.presentation",
-     *          "application/pdf",
-     *          "application/x-pdf",
      *          "image/jpeg",
      *          "image/png",
-     *          "audio/x-wav",
-     *          "audio/mpeg",
-     *          "video/mp4",
-     *          "application/zip"
+     *          "image/webp",
+     *          "application/pdf",
+     *          "application/x-pdf",
+     *          "application/msword",
+     *          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+     *          "application/vnd.ms-excel",
+     *          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     *          "text/plain",
+     *          "application/vnd.ms-powerpoint",
+     *          "application/vnd.openxmlformats-officedocument.presentationml.presentation"
      *     },
-     *     mimeTypesMessage = "Envoyez un document valide."
+     *     mimeTypesMessage = "Formats autorisés: jpg, png, webp, pdf, doc, docx, xls, xlsx, txt, ppt, pptx"
      *     )
      * @Vich\UploadableField(
      *     mapping = "attachment",
@@ -67,49 +60,33 @@ class Attachment
         switch ($this->fileMimeType):
 
             case 'application/pdf': // pdf
-            case 'appication/x-pdf': // pdf
+            case 'application/x-pdf': // pdf
                 $icon = 'far fa-file-pdf';
                 break;
 
             case 'application/msword': // doc
             case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': // docx
-            case 'application/vnd.oasis.opendocument.text': // odt
                 $icon = 'far fa-file-word';
                 break;
 
             case 'application/vnd.ms-excel': // xls
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': // xlsx
-            case 'application/vnd.oasis.opendocument.spreadsheet': //
-            case 'text/csv': // csv
                 $icon = 'far fa-file-excel';
                 break;
 
             case 'application/vnd.ms-powerpoint': // ppt
             case 'application/vnd.openxmlformats-officedocument.presentationml.presentation': // pptx
-            case 'application/vnd.oasis.opendocument.presentation': //
                 $icon = 'far fa-file-powerpoint';
-                break;
-
-            case 'audio/x-wav': // wav
-            case 'audio/mpeg': // mp3
-                $icon = 'far fa-file-audio';
                 break;
 
             case 'image/jpeg': // jpg, jpeg, jpe
             case 'image/png': // png
+            case 'image/webp': // webp
                 $icon = 'far fa-file-image';
-                break;
-
-            case 'video/mp4' : // mp4
-                $icon = 'far fa-file-video';
                 break;
 
             case 'text/plain' : // txt
                 $icon = 'far fa-file-alt';
-                break;
-
-            case 'application/zip' : // zip
-                $icon = 'far fa-file-archive';
                 break;
 
         endswitch;
