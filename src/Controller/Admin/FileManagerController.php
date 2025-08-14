@@ -45,12 +45,28 @@ class FileManagerController extends AbstractController
      */
     public function upload(Request $request, string $type, int $id): JsonResponse
     {
-        $files = $request->files->get('files');
+        // Try both 'files' and 'files[]' parameters
+        $files = $request->files->get('files') ?: $request->files->get('files');
+        if (!$files) {
+            // Check if files were sent as array
+            $filesArray = $request->files->all();
+            if (isset($filesArray['files']) && is_array($filesArray['files'])) {
+                $files = $filesArray['files'];
+            }
+        }
+        
         $uploadedFiles = [];
         $errors = [];
 
+        // Debug: Log what we received
+        error_log('FileManager upload - received files: ' . json_encode(array_keys($request->files->all())));
+        error_log('FileManager upload - files count: ' . (is_array($files) ? count($files) : ($files ? 1 : 0)));
+
         if (!$files) {
-            return new JsonResponse(['error' => 'Aucun fichier fourni'], 400);
+            return new JsonResponse([
+                'error' => 'Aucun fichier fourni',
+                'debug' => 'No files found in request. Available keys: ' . json_encode(array_keys($request->files->all()))
+            ], 400);
         }
 
         // Ensure files is an array
