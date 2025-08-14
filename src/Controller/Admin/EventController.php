@@ -24,26 +24,30 @@ use App\Repository\GuestRepository;
 use App\Security\AppVoter;
 use App\Security\EventVoter;
 use App\Service\EventHelper;
+use App\Service\FileManagerService;
 use DateInterval;
 use Doctrine\Persistence\ObjectManager;
 use PhpOffice\PhpSpreadsheet;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Entity;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Security;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
+ * @Route("/admin/dashboard/event")
  * @Route("/event")
  */
 class EventController extends AbstractController
@@ -51,228 +55,192 @@ class EventController extends AbstractController
     private ObjectManager $om;
     private ?Request $request;
     private EventHelper $eventHelper;
+    private FileManagerService $fileManagerService;
     private ?User $user;
 
-    public function __construct(ObjectManager $om, RequestStack $requestStack, EventHelper $eventHelper, Security $security)
+    public function __construct(ObjectManager $om, RequestStack $requestStack, EventHelper $eventHelper, FileManagerService $fileManagerService, Security $security)
     {
         $this->om = $om;
         $this->request = $requestStack->getCurrentRequest();
         $this->eventHelper = $eventHelper;
+        $this->fileManagerService = $fileManagerService;
         $this->user = $security->getUser();
     }
 
     /**
      * Event Tab : Résumé
      *
-     * @Route("/{id}", name="app_event_resume", requirements={"id": "\d+"})
-     * @Entity("event", expr="repository.findResumeTab(id)")
-     * @param Event $event
-     * @param GuestRepository $guestRepository
+     * @Route("/", name="app_index")
      * @return Response
      */
-    public function dashboard(Event $event, GuestRepository $guestRepository): Response
+    public function index(): Response
     {
-        $this->denyAccessUnlessGranted('DASHBOARD', $event);
+        $this->denyAccessUnlessGranted(AppVoter::INDEX);
+        $repository = $this->om->getRepository(Event::class);
 
-        $currSender = $this->eventHelper->getCurrentSender();
-        $workshopsEvent = $event->getWorkshops()->getValues();
+        $events = $repository->findBy([], ['id' => 'DESC']);
 
-        $renderParams = [
-            'event' => $event,
-            'sender' => $currSender,
-            'senderInfo' => null,
-            'workshops' => $workshopsEvent
-        ];
-
-        if ( $currSender ) $this->senderDashboard($event, $guestRepository, $renderParams);
-        else $this->managerDashboard($event, $guestRepository, $renderParams);
-
-        $renderParams['emailPrevSchedules'] = $this
-            ->om
-            ->getRepository(EmailSchedule::class)
-            ->findPrevSchedules($event, $currSender)
-        ;
-
-        $renderParams['emailNextSchedules'] = $this
-            ->om
-            ->getRepository(EmailSchedule::class)
-            ->findNextSchedules($event, $currSender)
-        ;
-
-        return $this->render('admin/event/tabs/dashboard.html.twig', $renderParams);
-    }
-
-    public function managerDashboard(Event $event, GuestRepository $repository, array &$renderParams): void
-    {
-        $currentDate = new \DateTime();
-
-        // L'événement est ouvert, on calcule les statistiques
-        if ( $event->getClosedAt() === null ) {
-
-            $renderParams['eventInfo']['totalTickets'] = $repository->getTotalTickets($event);
-            $renderParams['eventInfo']['totalGuests'] = $repository->getTotalContacts($event);
-            $renderParams['eventInfo']['totalReplies'] = $repository->getTotalSupplies($event);
-            $renderParams['eventInfo']['totalContactees'] = $repository->getTotalContacted($event);
-            $renderParams['eventInfo']['totalParticipated'] = $repository->getTotalParticipated($event);
-
-        }
-        elseif ($event->getBeginAt() < $currentDate) {
-
-            $renderParams['eventInfo']['totalParticipated'] = 0;
-
-            foreach($event->getSenders() as $sender){
-                $renderParams['eventInfo']['totalParticipated'] += $sender->getStat()['totalParticipated'];
-            }
-        }
-
-        // L'événement est clôturé, on récupère et additionne les statistiques des expéditeurs stockées en base
-        else {
-            $renderParams['eventInfo']['totalTickets'] = 0;
-            $renderParams['eventInfo']['totalGuests'] = 0;
-            $renderParams['eventInfo']['totalReplies'] = 0;
-            $renderParams['eventInfo']['totalContactees'] = 0;
-            $renderParams['eventInfo']['totalParticipated'] = 0;
-
-            foreach($event->getSenders() as $sender){
-
-                $renderParams['eventInfo']['totalTickets'] += $sender->getStat()['totalTickets'];
-                $renderParams['eventInfo']['totalGuests'] += $sender->getStat()['totalGuests'];
-                $renderParams['eventInfo']['totalReplies'] += $sender->getStat()['totalReplies'];
-                $renderParams['eventInfo']['totalContactees'] += $sender->getStat()['totalContactees'];
-                $renderParams['eventInfo']['totalParticipated'] += $sender->getStat()['totalParticipated'];
-            }
-        }
-
-        // Si l'événement a un nombre d'entrées limitées, on calcule le pourcentage d'entrées consommées
-        if ( $event->getTotalTickets() ) {
-
-            $renderParams['eventInfo']['percentTickets'] = round($renderParams['eventInfo']['totalTickets'] * 100 / $event->getTotalTickets());
-        }
-
-        //
-        if ($renderParams['eventInfo']['totalGuests']) {
-
-            $renderParams['eventInfo']['percentReplies'] = round($renderParams['eventInfo']['totalReplies'] * 100 / $renderParams['eventInfo']['totalGuests']);
-        }
-    }
-
-    public function senderDashboard(Event $event, GuestRepository $repository, array &$renderParams): void
-    {
-        $currentDate = new \DateTime();
-
-        $sender = $this->eventHelper->getCurrentSender();
-
-        // L'événement est ouvert, on calcule les statistiques
-        if ( $event->getClosedAt() === null ) {
-
-            $renderParams['senderInfo'] = [];
-
-            $renderParams['senderInfo']['totalTickets'] = $repository->getTotalTickets($sender);
-            $renderParams['senderInfo']['totalGuests'] = $repository->getTotalContacts($sender);
-            $renderParams['senderInfo']['totalReplies'] = $repository->getTotalSupplies($sender);
-            $renderParams['senderInfo']['totalContactees'] = $repository->getTotalContacted($sender);
-            $renderParams['senderInfo']['totalParticipated'] = $repository->getTotalParticipated($sender);
-        }
-        elseif ($event->getBeginAt() < $currentDate) {
-
-            $renderParams['senderInfo']['totalParticipated'] = $sender->getStat()['totalParticipated'];
-        }
-
-        // L'événement est clôturé, on récupère les statistiques stockées en base
-        else {
-
-            $renderParams['senderInfo'] = $sender->getStat();
-        }
-
-        // Si l'expéditeur a un nombre d'entrées allouées, on calcule le pourcentage d'entrées consommées
-        if ( $sender->getAllocatedTickets() ) {
-
-            $renderParams['senderInfo']['percentTickets'] = round($renderParams['senderInfo']['totalTickets'] * 100 / $sender->getAllocatedTickets());
-        }
-
-        //
-        if ( $renderParams['senderInfo']['totalGuests'] ) {
-
-            $renderParams['senderInfo']['percentReplies'] = round($renderParams['senderInfo']['totalReplies'] * 100 / $renderParams['senderInfo']['totalGuests']);
-        }
+        return $this->render('admin/event/index.html.twig', [
+            'events' => $events
+        ]);
     }
 
     /**
-     * Event Tab: Senders
+     * Event Tab : Événement
      *
-     * @Route("/{id}/senders", name="app_event_senders", requirements={"id": "\d+"})
-     * @Entity("event", expr="repository.findSendersTab(id)")
-     * @param Event $event
+     * @Route("/create", name="event.create")
+     * @Route("/create/{type}", name="event.create.typed", requirements={"type": "evenement|projection|ateliers|collection|golfcup|standard_plus_moments"})
+     * @Route("/{id}/edit", name="event.edit", requirements={"id": "\d+"})
+     * @param Event|null $event
      * @return Response
      */
-    public function senders(Event $event): Response
+    public function event(Event $event = null, string $type = null): Response
     {
-        if ( ! $this->isGranted(EventVoter::MANAGE_SENDERS, $event) ) return $this->redirectToRoute('app_event_resume', ['id' => $event]);
+        if ($event) {
+            $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
+        } else {
+            $this->denyAccessUnlessGranted(AppVoter::CREATE);
+        }
 
-        return $this->render('admin/event/tabs/senders.html.twig', [
+        $eventRepository = $this->om->getRepository(Event::class);
+        $isNew = $event === null;
+
+        if ($isNew) {
+            $event = new Event();
+            $event->setUser($this->user);
+            if ($type) {
+                $event->setType($type);
+            }
+        }
+
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($this->request);
+
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+
+                if (!$event->getSlug()) {
+                    // Génère un slug unique
+                    $baseSlug = $this->eventHelper->slugify($event->getName());
+                    $slug = $baseSlug;
+                    $counter = 1;
+
+                    while ($eventRepository->findOneBy(['slug' => $slug])) {
+                        $slug = $baseSlug . '-' . $counter;
+                        $counter++;
+                    }
+
+                    $event->setSlug($slug);
+                }
+
+                $this->om->persist($event);
+                $this->om->flush();
+
+                if ($isNew) {
+                    $this->addAlert('success', 'Evénement créé.');
+                    return $this->redirectToRoute('event.edit', ['id' => $event->getId()]);
+                } else {
+                    $this->addAlert('success', 'Evénement modifié.');
+                }
+            }
+        }
+
+        $isEventClosed = $event->getDateEnd() && $event->getDateEnd() < new \DateTime();
+
+        return $this->render('admin/event/event.html.twig', [
             'event' => $event,
+            'form' => $form->createView(),
+            'isEventClosed' => $isEventClosed
         ]);
     }
 
     /**
-     * @Route("/{id}/emails/schedules", name="app_event_emails_schedules", requirements={"id": "\d+"})
+     * Event Tab : Créneau horaire d'atelier
+     * @Route("/{id}/timeslots", name="event.timeslots", requirements={"id": "\d+"})
      * @param Event $event
-     * @param EmailScheduleRepository $scheduleRepository
      * @return Response
      */
-    public function scheduleEmails(Event $event, EmailScheduleRepository $scheduleRepository): Response
+    public function timeslots(Event $event): Response
     {
-        $this->denyAccessUnlessGranted(EventVoter::MANAGE_EMAIL_SCHEDULES, $event);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
 
-        return $this->render('admin/event/tabs/emails.schedules.html.twig', [
-            'schedules' => $scheduleRepository->findCurrSchedules($event, $this->eventHelper->getCurrentSender()),
+        $form = $this->createForm(EventTimeslotsType::class, $event);
+        $form->handleRequest($this->request);
+
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+
+                // Supprime les créneaux qui ne sont plus dans la nouvelle liste
+                $timeslotRepository = $this->om->getRepository(TimeSlot::class);
+                $existingTimeslots = $timeslotRepository->findBy(['event' => $event]);
+
+                foreach ($existingTimeslots as $existingTimeslot) {
+                    $found = false;
+                    foreach ($event->getTimeSlots() as $newTimeslot) {
+                        if ($existingTimeslot->getId() === $newTimeslot->getId()) {
+                            $found = true;
+                            break;
+                        }
+                    }
+
+                    if (!$found) {
+                        $this->om->remove($existingTimeslot);
+                    }
+                }
+
+                // Associe les nouveaux créneaux à l'événement
+                foreach ($event->getTimeSlots() as $timeslot) {
+                    $timeslot->setEvent($event);
+                    $this->om->persist($timeslot);
+                }
+
+                $this->om->persist($event);
+                $this->om->flush();
+
+                $this->addAlert('success', 'Créneaux modifiés.');
+            }
+        }
+
+        return $this->render('admin/event/timeslots.html.twig', [
+            'event' => $event,
+            'form' => $form->createView()
         ]);
     }
 
     /**
-     * @Route("/{id}/emails/templates", name="app_event_emails_templates", requirements={"id": "\d+"})
-     * @param Event $event
-     * @param EmailTemplateRepository $templateRepository
-     * @return Response
-     */
-    public function templateEmails(Event $event, EmailTemplateRepository $templateRepository): Response
-    {
-        $this->denyAccessUnlessGranted(EventVoter::MANAGE_EMAIL_TEMPLATES, $event);
-
-        return $this->render('admin/event/tabs/emails.templates.html.twig', [
-            'templates' => $templateRepository->findCurrTemplates($event, $this->eventHelper->getCurrentSender()),
-        ]);
-    }
-
-    /**
-     * @Route("/{id}/emails/visuals", name="app_event_emails_visuals", requirements={"id": "\d+"})
+     * Event Tab : Visuels de l'événement
+     *
+     * @Route("/{id}/visuals", name="event.visuals", requirements={"id": "\d+"})
      * @param Event $event
      * @return Response
      */
-    public function visualsEmails(Event $event): Response
+    public function visuals(Event $event): Response
     {
-        if ( ! $this->isGranted(EventVoter::MANAGE_EMAIL_VISUALS, $event) ) return $this->redirectToRoute('app_event_emails_schedules', ['id' => $event]);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
 
         $form = $this->createForm(VisualEventType::class, $event);
         $form->handleRequest($this->request);
 
         if ($form->isSubmitted()) {
-
             if ($form->isValid()) {
 
-                if (!$event->getEmailVisual()->getFile() && !$event->getEmailVisual()->getFileName()) {
+                // Supprimer l'ancien fichier si un nouveau est uploadé
+                if ($event->getEmailVisual() && $event->getEmailVisual()->getFile()) {
                     $this->om->remove($event->getEmailVisual());
                     $event->setEmailVisual(null);
                 }
-                if (!$event->getEmailUpVisual()->getFile() && !$event->getEmailUpVisual()->getFileName()) {
+
+                if ($event->getEmailUpVisual() && $event->getEmailUpVisual()->getFile()) {
                     $this->om->remove($event->getEmailUpVisual());
                     $event->setEmailUpVisual(null);
                 }
-                if (!$event->getEmailReminderVisual()->getFile() && !$event->getEmailReminderVisual()->getFileName()) {
+
+                if ($event->getEmailReminderVisual() && $event->getEmailReminderVisual()->getFile()) {
                     $this->om->remove($event->getEmailReminderVisual());
                     $event->setEmailReminderVisual(null);
                 }
-                if (!$event->getEmailThanksVisual()->getFile() && !$event->getEmailThanksVisual()->getFileName()) {
+
+                if ($event->getEmailThanksVisual() && $event->getEmailThanksVisual()->getFile()) {
                     $this->om->remove($event->getEmailThanksVisual());
                     $event->setEmailThanksVisual(null);
                 }
@@ -280,655 +248,381 @@ class EventController extends AbstractController
                 $this->om->persist($event);
                 $this->om->flush();
 
-                $this->addAlert(
-                    'success',
-                    'Visuels mis à jour.'
-                );
-
-                return $this->redirect($this->generateUrl('app_event_emails_visuals', ['id' => $event->getId()]).'#visual');
+                $this->addAlert('success', 'Visuels modifiés.');
             }
-
-            $this->addAlert('danger');
         }
 
-        return $this->render('admin/event/tabs/emails.visuals.html.twig', [
-            'form' => $form->createView(),
+        return $this->render('admin/event/visuals.html.twig', [
+            'event' => $event,
+            'form' => $form->createView()
         ]);
     }
 
     /**
-     * Event Tab: Contacts
+     * Event Tab : Invités
      *
-     * @Route("/{id}/contacts", name="app_event_contacts", requirements={"id": "\d+"})
+     * @Route("/{id}/guests", name="event.guests", requirements={"id": "\d+"})
      * @param Event $event
-     * @param GuestRepository $guestRepository
      * @return Response
      */
-    public function contacts(Event $event, GuestRepository $guestRepository): Response
+    public function guests(Event $event): Response
     {
-        if ( ! $this->isGranted(EventVoter::MANAGE_CONTACTS, $event) ) return $this->redirectToRoute('app_event_resume', ['id' => $event->getId()]);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
 
-        $guests = $guestRepository->findList($this->eventHelper->getCurrentSender());
+        $guests = $this->om->getRepository(Guest::class)->findBy(['event' => $event], ['id' => 'DESC']);
 
-        return $this->render('admin/event/tabs/contacts.index.html.twig', [
-            'guests' => $guests,
+        return $this->render('admin/event/guests.html.twig', [
+            'event' => $event,
+            'guests' => $guests
         ]);
     }
 
     /**
-     * Event Tab: Contacts
+     * Event Tab : Import d'invité
      *
-     * @Route("/{id}/contacts/add", name="app_event_contacts_add", requirements={"id": "\d+"})
+     * @Route("/{id}/guests/import", name="event.guests.import", requirements={"id": "\d+"})
      * @param Event $event
-     * @param ValidatorInterface $validator
      * @return Response
      */
-    public function contactsAdd(Event $event, ValidatorInterface $validator): Response
+    public function guestsImport(Event $event): Response
     {
-        if ( ! $this->isGranted(EventVoter::MANAGE_CONTACTS, $event) ) return $this->redirectToRoute('app_event_resume', ['id' => $event->getId()]);
+        $this->denyAccessUnlessGranted(EventVoter::EDIT, $event);
 
-        $form = $this->getContactForm();
-        $form = $form->getForm();
-        $form->handleRequest($this->request);
+        $importForm = $this->createFormBuilder()
+            ->add('file', FileType::class, [
+                'label' => 'Fichier Excel',
+                'required' => true,
+                'attr' => ['accept' => '.xlsx,.xls'],
+                'help' => 'Fichiers Excel uniquement (.xlsx, .xls)'
+            ])
+            ->add('skip_rows', IntegerType::class, [
+                'label' => 'Lignes à ignorer',
+                'data' => 0,
+                'required' => false,
+                'attr' => ['min' => 0],
+                'help' => 'Lignes initiales à supprimer à l\'import.',
+            ])
+            ->add('skip_cols', IntegerType::class, [
+                'label' => 'Colonnes à ignorer',
+                'data' => 0,
+                'required' => false,
+                'attr' => ['min' => 0],
+                'help' => 'Colonnes initiales à supprimer à l\'import.',
+            ])
+            ->add('import', SubmitType::class, [
+                'label' => 'Importer',
+                'attr' => ['class' => 'btn-primary']
+            ])
+            ->getForm();
 
-        if ($form->isSubmitted()) {
+        $importForm->handleRequest($this->request);
 
-            if ($form->isValid()) {
+        if ($importForm->isSubmitted() && $importForm->isValid()) {
+            $file = $importForm->get('file')->getData();
+            $skipRows = $importForm->get('skip_rows')->getData() ?: 0;
+            $skipCols = $importForm->get('skip_cols')->getData() ?: 0;
 
-                $contacts = $form->getNormData()['contacts'];
-                $total = count($contacts);
+            if ($file instanceof UploadedFile) {
+                try {
+                    $spreadsheet = PhpSpreadsheet\IOFactory::load($file->getPathname());
+                    $worksheet = $spreadsheet->getActiveSheet();
+                    $rows = $worksheet->toArray();
 
-                $countErrors = 0;
+                    $importedCount = 0;
+                    $errors = [];
 
-                $emails = [];
+                    // En-têtes (après avoir sauté les lignes et colonnes spécifiées)
+                    $headers = [];
+                    if (count($rows) > $skipRows) {
+                        $headerRow = $rows[$skipRows];
+                        for ($i = $skipCols; $i < count($headerRow); $i++) {
+                            $headers[] = $headerRow[$i];
+                        }
+                    }
 
-                /** @var Guest $contact */
-                foreach ($contacts as $key => $contact) {
+                    // Données
+                    for ($rowIndex = $skipRows + 1; $rowIndex < count($rows); $rowIndex++) {
+                        $row = $rows[$rowIndex];
 
-                    $contact
-                        ->setEvent($event)
-                        ->setSender($this->eventHelper->getCurrentSender())
-                    ;
-
-                    if (!in_array($contact->getEmail(), $emails)) {
-
-                        $emails[] = $contact->getEmail();
-
-                        $errors = $validator->validate($contact);
-
-                        if (count($errors)) {
-
-                            $countErrors++;
-                            $form->get('contacts')->get($key)->get('email')->addError(new FormError($errors[0]->getMessage()));
+                        // Ignore empty rows
+                        if (empty(array_filter($row))) {
                             continue;
                         }
 
-                    } else {
+                        try {
+                            // Supprimer les colonnes initiales
+                            $dataRow = [];
+                            for ($i = $skipCols; $i < count($row); $i++) {
+                                $dataRow[] = $row[$i] ?? '';
+                            }
 
-                        $countErrors++;
-                        $form->get('contacts')->get($key)->get('email')->addError(new FormError('Cette adresse email est déjà utilisée pour cet événement.'));
+                            $guest = new Guest();
+                            $guest->setEvent($event);
+
+                            // Mapping des colonnes (ajuster selon votre structure)
+                            if (isset($dataRow[0])) $guest->setFirstname($dataRow[0]);
+                            if (isset($dataRow[1])) $guest->setLastname($dataRow[1]);
+                            if (isset($dataRow[2])) $guest->setEmail($dataRow[2]);
+                            if (isset($dataRow[3])) $guest->setPhone($dataRow[3]);
+                            if (isset($dataRow[4])) $guest->setCompany($dataRow[4]);
+                            if (isset($dataRow[5])) $guest->setFunction($dataRow[5]);
+
+                            // Validation de base
+                            if (empty($guest->getFirstname()) && empty($guest->getLastname())) {
+                                $errors[] = "Ligne {$rowIndex}: Nom ou prénom requis";
+                                continue;
+                            }
+
+                            $this->om->persist($guest);
+                            $importedCount++;
+
+                        } catch (\Exception $e) {
+                            $errors[] = "Ligne {$rowIndex}: " . $e->getMessage();
+                        }
                     }
-
-                    // GoTo
-
-                    $this->om->persist($contact);
-                }
-
-                if ( ! $countErrors ) {
 
                     $this->om->flush();
 
-                    if ($total === 0) $msg = 'Aucun contact ajouté.';
-                    elseif ($total === 1) $msg = '1 contact ajouté.';
-                    else $msg = $total . ' contacts ajoutés.';
+                    $this->addAlert('success', "$importedCount invité(s) importé(s).");
 
-                    $this->addAlert(
-                        'success',
-                        $msg,
-                        'fas fa-check-circle'
-                    );
+                    if (!empty($errors)) {
+                        foreach (array_slice($errors, 0, 10) as $error) { // Limite à 10 erreurs
+                            $this->addAlert('warning', $error);
+                        }
+                        if (count($errors) > 10) {
+                            $this->addAlert('info', '... et ' . (count($errors) - 10) . ' autres erreurs.');
+                        }
+                    }
 
-                    return $this->redirectToRoute('app_event_contacts', [
-                        'id' => $event->getId(),
-                    ]);
+                    return $this->redirectToRoute('event.guests', ['id' => $event->getId()]);
 
-                } else {
-
-                    $this->addAlert(
-                        'danger',
-                        'Vérifiez vos informations et réessayez.',
-                    );
+                } catch (\Exception $e) {
+                    $this->addAlert('error', 'Erreur lors de l\'import: ' . $e->getMessage());
                 }
-
-            } else {
-
-                $this->addAlert(
-                    'danger',
-                    'Une erreur est survenue. Vérifiez vos informations et réessayez.',
-                );
             }
         }
 
-        return $this->render('admin/event/tabs/contacts.add.html.twig', [
-            'form' => $form->createView(),
+        return $this->render('admin/event/guests_import.html.twig', [
+            'event' => $event,
+            'importForm' => $importForm->createView()
         ]);
     }
 
     /**
-     * Event Tab: Contacts
+     * Event Tab : Expéditeurs
      *
-     * @Route("/{id}/contacts/import", name="app_event_contacts_import", requirements={"id": "\d+"})
+     * @Route("/{id}/senders", name="event.senders", requirements={"id": "\d+"})
      * @param Event $event
      * @return Response
      */
-    public function contactsImport(Event $event): Response
+    public function senders(Event $event): Response
     {
-        if ( ! $this->isGranted(EventVoter::MANAGE_CONTACTS, $event) ) return $this->redirectToRoute('app_event_resume', ['id' => $event->getId()]);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
 
-        $form = $this->createFormBuilder(['thead' => 0, 'firstCol' => 0])
-            ->add('file', FileType::class, [
-                'label' => 'Choisir un fichier',
-                'required' => true,
-                'constraints' => [
-                    new Assert\File([
-                        'maxSize' => '2048k',
-                        'mimeTypes' => [
-                            'text/csv',
-                            'application/vnd.ms-excel', // .xls,
-                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-                        ],
-                        'mimeTypesMessage' => 'Veuillez choisir un fichier compatible.',
-                    ])
-                ],
-                'help' => '2 Mo max. (.xls, .xlsx, .csv)',
-            ])
-            ->add('thead', NumberType::class, [
-                'label'     => 'Nombre de lignes d\'en-tête ?',
-                'required'  => true,
-                'help' => 'Lignes initiales à supprimer à l\'import.',
-            ])
-            ->add('firstCol', NumberType::class, [
-                'label'     => 'Nombre de colonnes initiales ?',
-                'required'  => true,
-                'help' => 'Colonnes initiales à supprimer à l\'import.',
-            ])
-        ;
+        $senders = $this->om->getRepository(Sender::class)->findBy(['event' => $event], ['id' => 'ASC']);
 
-        $form = $form->getForm();
-        $form->handleRequest($this->request);
-
-        if ($form->isSubmitted()) {
-
-            if ($form->isValid()) {
-
-                $firstCol = $form->get('firstCol')->getData();
-                $thead = $form->get('thead')->getData();
-
-                /** @var UploadedFile $file */
-                $file = $form->get('file')->getData();
-
-                if ($file) {
-
-                    try {
-                        $read = PhpSpreadsheet\IOFactory::createReaderForFile($file->getPathname());
-                        $spreadsheet = $read->load($file->getPathname());
-
-                        $sheetCount = $spreadsheet->getSheetCount();
-                        $data = [];
-
-                        // Parcourir les feuilles
-                        for ($i = 0; $i < $sheetCount; $i++) {
-
-                            $sheet = $spreadsheet->getSheet($i);
-                            $sheetData = $sheet->toArray(null, true, true, false);
-
-                            for ($j = 0; $j < $thead; $j++) {
-
-                                array_shift($sheetData);
-                            }
-
-                            $data = array_merge($data, $sheetData);
-                        }
-
-                        if ($data) {
-
-                            $rowTotal = 0;
-                            $emptyEmailTotal = 0;
-                            $rows = [];
-                            $emails = [];
-                            $duplicateEmails = [];
-
-                            foreach ($data as $rowKey => $row) {
-
-                                // Supprimer les colonnes initiales
-                                for ($i = 0; $i < $firstCol; $i++) {
-
-                                    array_shift($row);
-                                }
-
-                                // Compter les cellules vides
-                                $counter = 0;
-                                foreach ($row as $value) {
-
-                                    if (empty($value) && $value != '0') {
-
-                                        $counter++;
-                                    }
-                                }
-
-                                // Conserver les lignes où toutes les colonnes ne sont pas vides
-                                if ($counter !== count($row)) {
-
-                                    $rows[] = (new Guest())
-                                        ->setGender($row[0])
-                                        ->setFirstName($row[1])
-                                        ->setLastName($row[2])
-                                        ->setPhone($row[3])
-                                        ->setEmail($row[4])
-                                        ->setCompany(isset($row[5]) ? $row[5] : null)
-                                        ->setSiret(isset($row[6]) ? $row[6] : null)
-																				->setInspecteurCommercial($row[7]);
-
-                                    if (!in_array($row[4], $emails)) {
-
-                                        $emails[] = $row[4];
-
-                                    } else {
-
-                                        $duplicateEmails[] = array_key_last($rows);
-                                    }
-                                }
-
-                                unset($data[$rowKey]);
-                            }
-
-                            $contactForm = $this->getContactForm();
-                            $contactForm->get('contacts')->setData($rows);
-
-                            return $this->render('admin/event/tabs/contacts.add.html.twig', [
-                                'form' => $contactForm->getForm()->createView(),
-                                'rowTotal' => $rowTotal,
-                                'emptyEmailTotal' => $emptyEmailTotal,
-                                'formName' => 'Vérifier votre import',
-                            ]);
-                        }
-
-                    } catch (\Exception $e) {
-
-                        $this->addAlert(
-                            'danger',
-                            'Vérifiez votre fichier : '.
-                            'retirez les onglets inutiles, '.
-                            'vérifiez l\'ordre des colonnes.'
-                        );
-
-                        return $this->redirectToRoute('app_event_contacts_import', ['id' => $event->getId()]);
-                    }
-                }
-            }
-        }
-
-        return $this->render('admin/event/tabs/contacts.import.html.twig', [
-            'form' => $form->createView(),
-            'formButton' => 'Importer',
-            'formButtonIcon' => 'fas fa-upload',
-        ]);
-    }
-
-    private function getContactForm(): FormBuilderInterface
-    {
-        return $this->createFormBuilder(null)
-            ->setAction($this->generateUrl('app_event_contacts_add', ['id' => $this->eventHelper->getEvent()->getId()]))
-            ->add('contacts', CollectionType::class, [
-                'label' => false,
-                'entry_type' => GuestType::class,
-                'entry_options' => [
-                    'context' => GuestType::CONTEXT_ADD,
-                    'event_type' => $this->eventHelper->getEvent()->getType(),
-                    'sidekicks' => $this->eventHelper->getCurrentSender()->getSidekicks(),
-                    'prospects' => $this->eventHelper->getCurrentSender()->getProspects(),
-                    'type' => $this->eventHelper->getCurrentSender()->getGuestType(),
-                ],
-                'prototype_data' => (new Guest())
-                    ->setSender($this->eventHelper->getCurrentSender())
-                    ->setEvent($this->eventHelper->getEvent()),
-                'allow_add' => true,
-            ])
-        ;
-    }
-
-    /**
-     * Create new event form
-     *
-     * @Route("/new/collection", name="event_new_collection")
-     */
-    public function newCollection(): Response
-    {
-        $this->denyAccessUnlessGranted('CREATE_EVENT');
-
-        $event = (new Event())->setType(Event::TYPE_COLLECTION)->setOwner($this->getUser());
-
-        $form = $this->createForm(EventCollectionType::class, $event);
-        $form->handleRequest($this->request);
-
-        if ($form->isSubmitted()) {
-
-            if ($form->isValid()) {
-
-                $this->om->persist($event);
-                $this->om->flush();
-
-                return $this->redirectToRoute('app_index');
-            }
-        }
-
-        return $this->render('admin/event/collection/edit.html.twig', [
+        return $this->render('admin/event/senders.html.twig', [
             'event' => $event,
-            'form' => $form->createView(),
-            'pageTitle' => 'Nouvelle série d\'événements',
+            'senders' => $senders
         ]);
     }
 
     /**
-     * Edit collection
-     * @Route("/edit/collection/{id}", name="event_edit_collection", requirements={"id": "\d+"})
+     * Event Tab : Templates d'email
+     *
+     * @Route("/{id}/emails", name="event.emails", requirements={"id": "\d+"})
+     * @param Event $event
+     * @return Response
      */
-    public function editCollection(Event $event): Response
+    public function emails(Event $event): Response
     {
-        if ( ! $this->isGranted(EventVoter::EDIT, $event) ) return $this->redirectToRoute('app_index',);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
+
+        $emailTemplates = $this->om->getRepository(EmailTemplate::class)->findBy(['event' => $event], ['id' => 'ASC']);
+
+        return $this->render('admin/event/emails.html.twig', [
+            'event' => $event,
+            'emailTemplates' => $emailTemplates
+        ]);
+    }
+
+    /**
+     * Event Tab : Planifications d'email
+     *
+     * @Route("/{id}/schedules", name="event.schedules", requirements={"id": "\d+"})
+     * @param Event $event
+     * @return Response
+     */
+    public function schedules(Event $event): Response
+    {
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
+
+        $emailSchedules = $this->om->getRepository(EmailSchedule::class)->findBy(['event' => $event], ['scheduledAt' => 'ASC']);
+
+        return $this->render('admin/event/schedules.html.twig', [
+            'event' => $event,
+            'emailSchedules' => $emailSchedules
+        ]);
+    }
+
+    /**
+     * Duplication d'événement
+     * @Route("/{id}/duplicate", name="event.duplicate", requirements={"id": "\d+"})
+     * @param Event $originalEvent
+     * @return Response
+     */
+    public function duplicate(Event $originalEvent): Response
+    {
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $originalEvent);
+        $this->denyAccessUnlessGranted(AppVoter::CREATE);
+
+        $form = $this->createFormBuilder()
+            ->add('duplicate', SubmitType::class, [
+                'label' => 'Dupliquer',
+                'attr' => ['class' => 'btn-primary']
+            ])
+            ->getForm();
+
+        $form->handleRequest($this->request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Clone l'événement
+            $newEvent = clone $originalEvent;
+            $newEvent->setName($originalEvent->getName() . ' (Copie)');
+            $newEvent->setSlug(null); // Will be generated automatically
+            $newEvent->setUser($this->user);
+
+            // Reset dates to null or future
+            $newEvent->setDateStart(null);
+            $newEvent->setDateEnd(null);
+            $newEvent->setDateLimit(null);
+
+            // Clear collections and relations
+            $newEvent->getGuests()->clear();
+            $newEvent->getSenders()->clear();
+            $newEvent->getEmailTemplates()->clear();
+            $newEvent->getEmailSchedules()->clear();
+            $newEvent->getTimeSlots()->clear();
+            $newEvent->getWorkshops()->clear();
+            $newEvent->getViews()->clear();
+            $newEvent->getManagers()->clear();
+            $newEvent->getViewers()->clear();
+
+            // Clear files/attachments
+            $newEvent->setVisual(null);
+            $newEvent->setTicketVisual(null);
+            $newEvent->setLogo(null);
+            $newEvent->setPoster(null);
+            $newEvent->setMoviePoster(null);
+            $newEvent->setEmailVisual(null);
+            $newEvent->setEmailUpVisual(null);
+            $newEvent->setEmailReminderVisual(null);
+            $newEvent->setEmailThanksVisual(null);
+
+            $this->om->persist($newEvent);
+            $this->om->flush();
+
+            $this->addAlert('success', 'Événement dupliqué avec succès.');
+            return $this->redirectToRoute('event.edit', ['id' => $newEvent->getId()]);
+        }
+
+        return $this->render('admin/confirm.html.twig', [
+            'formConfirm' => $form->createView(),
+            'formTitle' => 'Dupliquer l\'événement ?',
+            'item' => $originalEvent
+        ]);
+    }
+
+    /**
+     * Archive/Désarchiver un événement
+     * @Route("/{id}/archive", name="event.archive", requirements={"id": "\d+"})
+     */
+    public function archive(Event $event): Response
+    {
+        $this->denyAccessUnlessGranted(EventVoter::EDIT, $event);
+
+        $form = $this->createFormBuilder()
+            ->add('confirm', SubmitType::class, [
+                'label' => $event->isArchived() ? 'Désarchiver' : 'Archiver',
+                'attr' => ['class' => 'btn-warning']
+            ])
+            ->getForm();
+
+        $form->handleRequest($this->request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $event->setArchived(!$event->isArchived());
+            $this->om->flush();
+
+            $this->addAlert('success', $event->isArchived() ? 'Événement archivé.' : 'Événement désarchivé.');
+            return $this->redirectToRoute('app_index');
+        }
+
+        return $this->render('admin/confirm.html.twig', [
+            'formConfirm' => $form->createView(),
+            'formTitle' => ($event->isArchived() ? 'Désarchiver' : 'Archiver') . ' l\'événement ?',
+            'item' => $event
+        ]);
+    }
+
+    /**
+     * Collection d'événement
+     * @Route("/{id}/collection", name="event.collection", requirements={"id": "\d+"})
+     * @param Event $event
+     * @return Response
+     */
+    public function collection(Event $event): Response
+    {
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
+
+        if ($event->getType() !== 'collection') {
+            throw $this->createNotFoundException('Cet événement n\'est pas de type collection.');
+        }
 
         $form = $this->createForm(EventCollectionType::class, $event);
         $form->handleRequest($this->request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Supprimer l'ancien fichier si un nouveau est uploadé
+            if ($event->getVisual() && $event->getVisual()->getFile()) {
+                $this->om->remove($event->getVisual());
+                $event->setVisual(null);
+            }
+
+            if ($event->getTicketVisual() && $event->getTicketVisual()->getFile()) {
+                $this->om->remove($event->getTicketVisual());
+                $event->setTicketVisual(null);
+            }
+
+            if ($event->getLogo() && $event->getLogo()->getFile()) {
+                $this->om->remove($event->getLogo());
+                $event->setLogo(null);
+            }
+
+            if ($event->getPoster() && $event->getPoster()->getFile()) {
+                $this->om->remove($event->getPoster());
+                $event->setPoster(null);
+            }
+
+            if ($event->getMoviePoster() && $event->getMoviePoster()->getFile()) {
+                $this->om->remove($event->getMoviePoster());
+                $event->setMoviePoster(null);
+            }
 
             $this->om->persist($event);
             $this->om->flush();
 
-            return $this->redirectToRoute('app_collection', ['id' => $event->getId()]);
+            $this->addAlert('success', 'Collection modifiée.');
         }
 
-       return $this->render('admin/event/tabs/edit.collection.html.twig', [
-           'form' => $form->createView(),
-           'event' => $event,
-       ]);
-    }
-
-    /**
-     * Create new event form
-     *
-     * @Route("/new", name="event_new")
-     */
-    public function new(): Response
-    {
-        $this->denyAccessUnlessGranted('CREATE_EVENT');
-
-        $event = (new Event())->setOwner($this->user);
-
-        return $this->edit($event);
-    }
-
-    /**
-     * Create new event form
-     *
-     * @Route("/new/{id}", name="event_collection_new", requirements={"id": "\d+"})
-     */
-    public function newInCollection(?Event $event): Response
-    {
-        if ($event->getType() !== Event::TYPE_COLLECTION) $this->redirectToRoute('event_new');
-
-        $event = (new Event())->setOwner($this->user)->setParent($event);
-
-        return $this->edit($event);
-    }
-
-    /**
-     * Edit event form
-     *
-     * @Route("/{id}/edit", name="app_event_edit", requirements={"id": "\d+"})
-     * @param Event $event
-     * @return Response
-     */
-    public function edit(Event $event): Response
-    {
-        if ( ! $this->isGranted(EventVoter::EDIT, $event) || $this->eventHelper->getCurrentSender() ) return $this->redirectToRoute('app_event_resume', ['id' => $event]);
-
-        $form = $this->createForm(EventType::class, $event);
-        $form->handleRequest($this->request);
-
-        if ($form->isSubmitted()) {
-            if ($form->isValid()) {
-                // On récupère d'abord le type d'événement
-                $eventType = $form->get('type')->getData();
-                
-                // On met à jour le type
-                $event->setType($eventType);
-                
-                // On gère les temps forts uniquement si c'est le bon type et si les méthodes existent
-                if ($eventType === Event::TYPE_STANDARD_PLUS_MOMENTS && method_exists($event, 'setMomentBeginAt')) {
-                    $event->setMomentBeginAt($form->get('momentBeginAt')->getData());
-                    $event->setMomentFinishAt($form->get('momentFinishAt')->getData());
-                    $event->setMomentDescription($form->get('momentDescription')->getData());
-                    $event->setMomentAddress($form->get('momentAddress')->getData());
-                    $event->setMomentMaxGuests($form->get('momentMaxGuests')->getData());
-                } else if (method_exists($event, 'setMomentBeginAt')) {
-                    // Si ce n'est pas un événement avec temps forts mais que les méthodes existent, on réinitialise les champs
-                    $event->setMomentBeginAt(null);
-                    $event->setMomentFinishAt(null);
-                    $event->setMomentDescription(null);
-                    $event->setMomentAddress(null);
-                    $event->setMomentMaxGuests(null);
-                }
-
-                if (!$event->getVisual()->getFile() && !$event->getVisual()->getFileName()) {
-                    $this->om->remove($event->getVisual());
-                    $event->setVisual(null);
-                }
-
-                if (!$event->getTicketVisual()->getFile() && !$event->getTicketVisual()->getFileName()) {
-                    $this->om->remove($event->getTicketVisual());
-                    $event->setTicketVisual(null);
-                }
-
-                if (!$event->getLogo()->getFile() && !$event->getLogo()->getFileName()) {
-                    $this->om->remove($event->getLogo());
-                    $event->setLogo(null);
-                }
-
-                if (!$event->getPoster()->getFile() && !$event->getPoster()->getFileName()) {
-                    $this->om->remove($event->getPoster());
-                    $event->setPoster(null);
-                }
-
-                if (!$event->getMoviePoster()->getFile() && !$event->getMoviePoster()->getFileName()) {
-                    $this->om->remove($event->getMoviePoster());
-                    $event->setMoviePoster(null);
-                }
-
-                if ($event->getType() === Event::TYPE_WORKSHOPS || $event->getType() === 'ateliers') {
-                    foreach ($event->getTimeSlots() as $timeSlot) {
-                        foreach ($timeSlot->getWorkshops() as $workshop) {
-                            $workshop->setTimeSlot($timeSlot);
-                        }
-                    }
-                }
-
-                $this->om->persist($event);
-                $this->om->flush();
-
-                $this->addAlert('success');
-
-                return $this->redirectToRoute('app_event_edit', ['id' => $event->getId()]);
-            }
-        }
-
-        return $this->render('admin/event/tabs/edit.html.twig', [
-            'form' => $form->createView(),
-            'form_title' => 'Modifier l\'événement',
+        return $this->render('admin/event/collection.html.twig', [
             'event' => $event,
+            'form' => $form->createView()
         ]);
     }
 
     /**
-     * @Route("/{id}/workshops/timeslots", name="app_event_edit_timeslots", requirements={"id": "\d+"})
-     * @param Event $event
-     * @return Response
-     */
-    public function timeslots(Event $event): Response
-    {
-        if ( ! $this->isGranted(EventVoter::EDIT, $event) ) return $this->redirectToRoute('app_event_resume', ['id' => $event]);
-
-        if ($event->getType() !== 'ateliers') return $this->redirectToRoute('app_event_edit', ['id' => $event->getId()]);
-
-        $form = $this->createForm(EventTimeslotsType::class, $event);
-        $form->handleRequest($this->request);
-
-        if ($form->isSubmitted()) {
-
-            if ($form->isValid()) {
-
-                /** @var TimeSlot $timeSlot */
-                foreach ($event->getTimeSlots() as $timeSlot) {
-
-                    /** @var WorkshopTimeSlot $workshop */
-                    foreach ($timeSlot->getWorkshops() as $workshop) {
-
-                        $workshop->setTimeSlot($timeSlot);
-                    }
-                }
-
-                $this->om->persist($event);
-                $this->om->flush();
-
-                $this->addAlert('success');
-
-                return $this->redirectToRoute('app_event_edit_timeslots', ['id' => $event->getId()]);
-            }
-        }
-
-        return $this->render('admin/event/tabs/edit.timeslots.html.twig', [
-            'form' => $form->createView(),
-            'form_title' => 'Définir les créneaux',
-        ]);
-    }
-
-    /**
-     * Event Preview
-     *
-     * @Route("/{id}/show", name="event_show", requirements={"id": "\d+"})
-     * @param Event $event
-     * @return Response
-     */
-    public function show(Event $event): Response
-    {
-        $this->denyAccessUnlessGranted('DASHBOARD', $event);
-
-        $currSender = $this->eventHelper->getCurrentSender();
-        $guest = (new Guest())->setEvent($event)->setSender($currSender);
-
-        $legal = $this->om->getRepository(Option::class)->findLegal();
-
-        $form = $this->createForm(GuestType::class, $guest, [
-            'context' => GuestType::CONTEXT_FRONT,
-            'event_type' => $event->getType(),
-            'sidekicks' => $currSender ? $currSender->getSidekicks() : 0,
-            'prospects' => $currSender ? $currSender->getProspects() : 0,
-            'type' => $this->eventHelper->getCurrentSender()
-                ? $this->eventHelper->getCurrentSender()->getGuestType()
-                : Sender::GUEST_TYPE_DEFAULT
-            ,
-        ]);
-        $form->handleRequest($this->request);
-
-        if ($form->isSubmitted()) {
-
-            $this->addAlert('info', 'Seul un invité peut soumettre ce formulaire.');
-        }
-
-        $address = $event->getAddress();
-        $addressBreakLinePos = strpos($address, "\n");
-
-        if ($addressBreakLinePos) {
-
-            $addressFirstLine = substr($address, 0, $addressBreakLinePos);
-            $address = substr($address, $addressBreakLinePos+1);
-
-        } else {
-
-            $addressFirstLine = $address;
-            $address = '';
-        }
-
-        return $this->render('front/show.html.twig', [
-            'form' => $form->createView(),
-            'event' => $event,
-            'body_class' => 'event',
-            'pageTitle' => $event->getName(),
-            'addressFirstLine' => $addressFirstLine,
-            'address' => $address,
-            'preview' => true,
-            'legal' => $legal,
-        ]);
-    }
-
-    /**
-     * @Route("/{id}/move", name="event.move", requirements={"id": "\d+"})
-     * @param Event $event
-     * @param EventRepository $eventRepository
-     * @return Response
-     */
-    public function move(Event $event, EventRepository $eventRepository): Response
-    {
-        $this->denyAccessUnlessGranted(AppVoter::MANAGE_ALL_EVENTS);
-
-        $collections = $eventRepository->getCollections();
-        $collectionsArchived = $eventRepository->getCollectionsArchived();
-
-        return $this->render('admin/event/tabs/move.html.twig', [
-            'event' => $event,
-            'collections' => $collections,
-            'collectionsArchived' => $collectionsArchived
-        ]);
-    }
-
-    /**
-     * @Route("/{id}/move/{collection}", name="event.moveto", requirements={"id": "\d+"})
-     * @param Event $event
-     * @param int $collection
-     * @param EventRepository $eventRepository
-     * @return Response
-     */
-    public function moveTo(Event $event, int $collection, EventRepository $eventRepository): Response
-    {
-        $this->denyAccessUnlessGranted(AppVoter::MANAGE_ALL_EVENTS);
-        if ($collection === 0) {
-
-            // On retire la collection, ça devient un événement hors collection
-            $event->setParent(null);
-
-        } else {
-
-            $collection = $eventRepository->find($collection);
-
-            if (!$collection || !$collection->isCollection()) {
-
-                throw $this->createAccessDeniedException(); // Todo : à vérifier ^^
-
-            } else {
-
-                $event->setParent($collection);
-            }
-        }
-
-        $this->om->persist($event);
-        $this->om->flush();
-
-        $this->addAlert('Super !');
-
-        return $this->redirectToRoute('app_event_resume', ['id' => $event->getId()]);
-    }
-
-    /**
+     * Suppression d'événement
      * @Route("/{id}/delete", name="event.delete", requirements={"id": "\d+"})
      * @param Event $event
      * @return Response
@@ -981,6 +675,9 @@ class EventController extends AbstractController
                     $connection->executeStatement('DELETE FROM event_manager WHERE event_id = ?', [$event->getId()]);
                     $connection->executeStatement('DELETE FROM event_viewer WHERE event_id = ?', [$event->getId()]);
                     
+                    // Supprimer tous les dossiers d'attachments associés à l'événement
+                    $this->fileManagerService->deleteEventAttachments($event->getId());
+                    
                     // Supprimer l'événement
                     $connection->executeStatement('DELETE FROM event WHERE id = ?', [$event->getId()]);
                     
@@ -1000,44 +697,64 @@ class EventController extends AbstractController
         return $this->render('admin/confirm.html.twig', [
             'formConfirm' => $form->createView(),
             'formTitle' => 'Confirmer la suppression de l\'événement ? Cette action est irréversible.',
-            'backLink' => $this->generateUrl('app_event_resume', [
-                'id' => $event->getId(),
-            ])
+            'item' => $event
         ]);
     }
 
     /**
-     * @Route("/{id}/archive", name="event.archive", requirements={"id": "\d+"})
+     * Export de données
+     * @Route("/{id}/export", name="event.export", requirements={"id": "\d+"})
      * @param Event $event
      * @return Response
      */
-    public function archive(Event $event): Response
+    public function export(Event $event): Response
     {
-        $this->denyAccessUnlessGranted(EventVoter::EDIT, $event);
+        $this->denyAccessUnlessGranted(EventVoter::VIEW, $event);
 
-        $event->toggleArchived();
+        $guests = $this->om->getRepository(Guest::class)->findBy(['event' => $event]);
 
-        $this->om->persist($event);
-        $this->om->flush();
+        // Créer le fichier Excel
+        $spreadsheet = new PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
 
-        return $event->getArchivedAt() === null
-            ? $this->redirectToRoute('app_archive')
-            : $this->redirectToRoute('app_index')
-        ;
+        // En-têtes
+        $headers = ['Prénom', 'Nom', 'Email', 'Téléphone', 'Entreprise', 'Fonction', 'Statut', 'Date d\'inscription'];
+        $sheet->fromArray($headers, null, 'A1');
+
+        // Données
+        $row = 2;
+        foreach ($guests as $guest) {
+            $data = [
+                $guest->getFirstname(),
+                $guest->getLastname(),
+                $guest->getEmail(),
+                $guest->getPhone(),
+                $guest->getCompany(),
+                $guest->getFunction(),
+                $guest->getStatus(),
+                $guest->getCreatedAt() ? $guest->getCreatedAt()->format('d/m/Y H:i') : ''
+            ];
+            $sheet->fromArray($data, null, 'A' . $row);
+            $row++;
+        }
+
+        // Configurer la réponse
+        $filename = 'invites_' . $event->getSlug() . '_' . date('Y-m-d') . '.xlsx';
+
+        $writer = new PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new Response();
+
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $response->setContent($content);
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+
+        return $response;
     }
-
-    /**
-     * @Route("/{id}/scanner", name="app_event_qrscanner", requirements={"id": "\d+"})
-     * @param Event $event
-     * @return Response
-     */
-    public function scanner(Event $event): Response
-    {
-        $this->denyAccessUnlessGranted(EventVoter::MANAGE_QRCODE, $event);
-
-        return $this->render('admin/event/tabs/scanner.html.twig', [
-            'event' => $event,
-        ]);
-    }
-
 }

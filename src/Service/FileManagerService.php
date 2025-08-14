@@ -173,6 +173,20 @@ class FileManagerService
         return round($bytes, 2) . ' ' . $units[$i];
     }
 
+    public function deleteEventAttachments(int $eventId): void
+    {
+        // List of possible attachment types for events
+        $attachmentTypes = ['sender', 'event', 'email', 'template'];
+        
+        foreach ($attachmentTypes as $type) {
+            $folderPath = $this->uploadsDirectory . '/' . $type . '-' . $eventId;
+            
+            if ($this->filesystem->exists($folderPath)) {
+                $this->filesystem->remove($folderPath);
+            }
+        }
+    }
+
     private function getUniqueFilename(string $folder, string $filename, string $extension): string
     {
         $baseFilename = $filename . '.' . $extension;
